@@ -64,7 +64,6 @@ public class SolicitudAtencionDto
     public string ProyectoNombre { get; set; } = string.Empty;
     public string EstadoDescripcion { get; set; } = string.Empty;
     public string Urgencia { get; set; } = string.Empty;
-    public string AccionSugerida { get; set; }= string.Empty;
 }
 
 public class SolicitudColaDto

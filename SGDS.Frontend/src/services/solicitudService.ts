@@ -23,7 +23,6 @@ export interface NecesitaAtencionDto {
     proyectoNombre: string; 
     estadoDescripcion: string; 
     urgencia: 'vence_hoy' | 'vence_mañana' | 'normal';
-    accionSugerida: 'tomar_caso' | 'revisar';
 }
 
 export interface ColaTrabajoDto {

@@ -68,6 +68,7 @@ public class PasivosLaboralesController : ControllerBase
             TipoSolicitudId = dto.TipoSolicitudId,
             Estado = "Radicada",
             FechaCreacion = DateTime.UtcNow,
+            UsuarioAsignadoId = esAdminSyc ? null : int.Parse(User.FindFirst("sub")!.Value),
             InstrumentoPasivoLaboral = new InstrumentoPasivoLaboral
             {
                 Instrumento = dto.Instrumento,

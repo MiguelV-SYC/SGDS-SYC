@@ -86,38 +86,46 @@ public class SycTraceController : ControllerBase
         var prefijo = GenerarPrefijoEstampilla(ahora, dto.OrigenProducto);
         var codigoInicial = await SiguienteSecuencialAsync(prefijo);
 
-        var nuevaSolicitud = new Solicitud
+        // Mismo caso de negocio avanzando de Infoconsumo a SycTrace — se avanza la Solicitud que
+        // ya existe (la de la tornaguía) en vez de crear una nueva.
+        var nuevaSolicitud = tornaguiaSolicitud!;
+        var estadoAnterior = nuevaSolicitud.Estado;
+        nuevaSolicitud.ProyectoId = dto.ProyectoId;
+        nuevaSolicitud.TipoSolicitudId = dto.TipoSolicitudId;
+        nuevaSolicitud.Estado = "Generada";
+        nuevaSolicitud.UsuarioAsignadoId = esAdminSyc ? nuevaSolicitud.UsuarioAsignadoId : int.Parse(User.FindFirst("sub")!.Value);
+        nuevaSolicitud.EstampillaFisica = new EstampillaFisica
         {
-            EmpresaId = tornaguiaSolicitud.EmpresaId,
-            ProyectoId = dto.ProyectoId,
-            TipoSolicitudId = dto.TipoSolicitudId,
-            Estado = "Generada",
-            FechaCreacion = DateTime.UtcNow,
-            EstampillaFisica = new EstampillaFisica
-            {
-                SolicitudInfoconsumoId = dto.SolicitudInfoconsumoId,
-                CategoriaProducto = dto.CategoriaProducto,
-                SubcategoriaProducto = dto.SubcategoriaProducto,
-                NombreProducto = dto.NombreProducto,
-                Marca = dto.Marca,
-                GradoAlcoholimetrico = dto.GradoAlcoholimetrico,
-                ContenidoNetoCc = dto.ContenidoNetoCc,
-                UnidadesPorCajetilla = dto.UnidadesPorCajetilla,
-                PesoGramos = dto.PesoGramos,
-                RegistroInvima = registroInvima,
-                LoteProduccion = dto.LoteProduccion,
-                OrigenProducto = dto.OrigenProducto,
-                NumeroTornaguia = dto.NumeroTornaguia,
-                NumeroDeclaracionImportacion = dto.NumeroDeclaracionImportacion,
-                RegistroIntroduccion = dto.RegistroIntroduccion,
-                Prefijo = prefijo,
-                CantidadEstampillas = cantidad,
-                CodigoInicial = codigoInicial,
-                CodigoFinal = codigoInicial + cantidad - 1,
-            },
+            SolicitudInfoconsumoId = dto.SolicitudInfoconsumoId,
+            CategoriaProducto = dto.CategoriaProducto,
+            SubcategoriaProducto = dto.SubcategoriaProducto,
+            NombreProducto = dto.NombreProducto,
+            Marca = dto.Marca,
+            GradoAlcoholimetrico = dto.GradoAlcoholimetrico,
+            ContenidoNetoCc = dto.ContenidoNetoCc,
+            UnidadesPorCajetilla = dto.UnidadesPorCajetilla,
+            PesoGramos = dto.PesoGramos,
+            RegistroInvima = registroInvima,
+            LoteProduccion = dto.LoteProduccion,
+            OrigenProducto = dto.OrigenProducto,
+            NumeroTornaguia = dto.NumeroTornaguia,
+            NumeroDeclaracionImportacion = dto.NumeroDeclaracionImportacion,
+            RegistroIntroduccion = dto.RegistroIntroduccion,
+            Prefijo = prefijo,
+            CantidadEstampillas = cantidad,
+            CodigoInicial = codigoInicial,
+            CodigoFinal = codigoInicial + cantidad - 1,
         };
 
-        _context.Solicitudes.Add(nuevaSolicitud);
+        await _context.SaveChangesAsync();
+
+        _context.HistorialEstados.Add(new HistorialEstado
+        {
+            SolicitudId = nuevaSolicitud.Id,
+            EstadoAnterior = estadoAnterior,
+            EstadoNuevo = nuevaSolicitud.Estado,
+            FechaCambio = DateTime.UtcNow,
+        });
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetEstampilla), new { id = nuevaSolicitud.Id }, new { nuevaSolicitud.Id });

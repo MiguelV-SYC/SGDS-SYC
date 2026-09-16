@@ -93,49 +93,83 @@ public class InfoconsumoController : ControllerBase
         var errorLoteGoTrace = await ValidarLoteGoTraceAsync(dto.LoteGoTraceSolicitudId, dto.EmpresaId);
         if (errorLoteGoTrace != null) return BadRequest(new { mensaje = errorLoteGoTrace });
 
-        var nuevaSolicitud = new Solicitud
+        var tornaguia = new TornaguiaInfoconsumo
         {
-            EmpresaId = dto.EmpresaId,
-            ProyectoId = dto.ProyectoId,
-            TipoSolicitudId = dto.TipoSolicitudId,
-            Estado = "Elaborada",
-            FechaCreacion = DateTime.UtcNow,
-            TornaguiaInfoconsumo = new TornaguiaInfoconsumo
-            {
-                TipoTransporte = dto.TipoTransporte,
-                CategoriaProducto = dto.CategoriaProducto,
-                SubcategoriaProducto = dto.SubcategoriaProducto,
-                OrigenProducto = dto.OrigenProducto,
-                NumeroLote = dto.NumeroLote,
-                GradosAlcoholimetricos = dto.GradosAlcoholimetricos,
-                UnidadesFisicas = dto.UnidadesFisicas,
-                PvpCertificado = dto.PvpCertificado,
-                PesoGramos = dto.PesoGramos,
-                ValorAduana = dto.ValorAduana,
-                GravamenesArancelarios = dto.GravamenesArancelarios,
-                DepartamentoOrigen = dto.DepartamentoOrigen,
-                MunicipioOrigen = dto.MunicipioOrigen,
-                DepartamentoDestino = dto.DepartamentoDestino,
-                MunicipioDestino = dto.MunicipioDestino,
-                DireccionEspecificaOrigen = dto.DireccionEspecificaOrigen,
-                LatOrigen = dto.LatOrigen,
-                LngOrigen = dto.LngOrigen,
-                DireccionEspecificaDestino = dto.DireccionEspecificaDestino,
-                LatDestino = dto.LatDestino,
-                LngDestino = dto.LngDestino,
-                EmpresaTransportadora = dto.EmpresaTransportadora,
-                NitTransportador = dto.NitTransportador,
-                PlacaVehiculo = dto.PlacaVehiculo,
-                Conductor = dto.Conductor,
-                CedulaConductor = dto.CedulaConductor,
-                TipoVehiculo = dto.TipoVehiculo,
-                Observaciones = dto.Observaciones,
-                LoteGoTraceSolicitudId = dto.LoteGoTraceSolicitudId,
-            },
+            TipoTransporte = dto.TipoTransporte,
+            CategoriaProducto = dto.CategoriaProducto,
+            SubcategoriaProducto = dto.SubcategoriaProducto,
+            OrigenProducto = dto.OrigenProducto,
+            NumeroLote = dto.NumeroLote,
+            GradosAlcoholimetricos = dto.GradosAlcoholimetricos,
+            UnidadesFisicas = dto.UnidadesFisicas,
+            PvpCertificado = dto.PvpCertificado,
+            PesoGramos = dto.PesoGramos,
+            ValorAduana = dto.ValorAduana,
+            GravamenesArancelarios = dto.GravamenesArancelarios,
+            DepartamentoOrigen = dto.DepartamentoOrigen,
+            MunicipioOrigen = dto.MunicipioOrigen,
+            DepartamentoDestino = dto.DepartamentoDestino,
+            MunicipioDestino = dto.MunicipioDestino,
+            DireccionEspecificaOrigen = dto.DireccionEspecificaOrigen,
+            LatOrigen = dto.LatOrigen,
+            LngOrigen = dto.LngOrigen,
+            DireccionEspecificaDestino = dto.DireccionEspecificaDestino,
+            LatDestino = dto.LatDestino,
+            LngDestino = dto.LngDestino,
+            EmpresaTransportadora = dto.EmpresaTransportadora,
+            NitTransportador = dto.NitTransportador,
+            PlacaVehiculo = dto.PlacaVehiculo,
+            Conductor = dto.Conductor,
+            CedulaConductor = dto.CedulaConductor,
+            TipoVehiculo = dto.TipoVehiculo,
+            Observaciones = dto.Observaciones,
+            LoteGoTraceSolicitudId = dto.LoteGoTraceSolicitudId,
         };
 
-        _context.Solicitudes.Add(nuevaSolicitud);
+        Solicitud nuevaSolicitud;
+        string? estadoAnterior = null;
+
+        if (dto.LoteGoTraceSolicitudId.HasValue)
+        {
+            // Mismo caso de negocio avanzando de GoTrace a Infoconsumo — se avanza la Solicitud
+            // que ya existe en vez de crear una nueva (un caso conserva un único SolicitudId).
+            nuevaSolicitud = (await _context.Solicitudes.FindAsync(dto.LoteGoTraceSolicitudId.Value))!;
+            estadoAnterior = nuevaSolicitud.Estado;
+            nuevaSolicitud.EmpresaId = dto.EmpresaId;
+            nuevaSolicitud.ProyectoId = dto.ProyectoId;
+            nuevaSolicitud.TipoSolicitudId = dto.TipoSolicitudId;
+            nuevaSolicitud.Estado = "Elaborada";
+            nuevaSolicitud.UsuarioAsignadoId = esAdminSyc ? nuevaSolicitud.UsuarioAsignadoId : int.Parse(User.FindFirst("sub")!.Value);
+            nuevaSolicitud.TornaguiaInfoconsumo = tornaguia;
+        }
+        else
+        {
+            nuevaSolicitud = new Solicitud
+            {
+                EmpresaId = dto.EmpresaId,
+                ProyectoId = dto.ProyectoId,
+                TipoSolicitudId = dto.TipoSolicitudId,
+                Estado = "Elaborada",
+                FechaCreacion = DateTime.UtcNow,
+                UsuarioAsignadoId = esAdminSyc ? null : int.Parse(User.FindFirst("sub")!.Value),
+                TornaguiaInfoconsumo = tornaguia,
+            };
+            _context.Solicitudes.Add(nuevaSolicitud);
+        }
+
         await _context.SaveChangesAsync();
+
+        if (estadoAnterior != null)
+        {
+            _context.HistorialEstados.Add(new HistorialEstado
+            {
+                SolicitudId = nuevaSolicitud.Id,
+                EstadoAnterior = estadoAnterior,
+                EstadoNuevo = nuevaSolicitud.Estado,
+                FechaCambio = DateTime.UtcNow,
+            });
+            await _context.SaveChangesAsync();
+        }
 
         return CreatedAtAction(nameof(GetTornaguia), new { id = nuevaSolicitud.Id }, new { nuevaSolicitud.Id });
     }

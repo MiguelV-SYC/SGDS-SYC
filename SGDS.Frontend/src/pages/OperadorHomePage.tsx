@@ -6,7 +6,6 @@ import {
   getMisIndicadores,
   getNecesitanAtencion,
   getMiCola,
-  asignarUsuarioSolicitud,
   type IndicadoresOperadorDto,
   type NecesitaAtencionDto,
   type ColaTrabajoDto,
@@ -37,7 +36,6 @@ export default function OperadorHomePage() {
   const [cola, setCola] = useState<ColaTrabajoDto[]>([]);
   const [filtroCola, setFiltroCola] = useState<'todas' | 'en_revision' | 'pendientes'>('todas');
   const [loading, setLoading] = useState(true);
-  const [asignando, setAsignando] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([getMisIndicadores(), getNecesitanAtencion(5)]).then(([i, a]) => {
@@ -56,26 +54,6 @@ export default function OperadorHomePage() {
     day: 'numeric',
     month: 'long',
   }).format(new Date());
-
-  async function handleTomarCaso(solicitudId: number) {
-    if (!user) return;
-    setAsignando(solicitudId);
-    try {
-      await asignarUsuarioSolicitud(solicitudId, Number(user.id));
-      const [i, a, c] = await Promise.all([
-        getMisIndicadores(),
-        getNecesitanAtencion(5),
-        getMiCola({ filtro: filtroCola }),
-      ]);
-      setIndicadores(i);
-      setAtencion(a);
-      setCola(c);
-    } catch (err: any) {
-      alert(err?.response?.data?.mensaje ?? 'No se pudo tomar el caso.');
-    } finally {
-      setAsignando(null);
-    }
-  }
 
   return (
     <div className="flex min-h-screen bg-paper">
@@ -155,19 +133,10 @@ export default function OperadorHomePage() {
                           <span className={`text-[12px] font-semibold ${estilo.texto}`}>{estilo.label}</span>
                         )}
                         <button
-                          onClick={() =>
-                            a.accionSugerida === 'tomar_caso'
-                              ? handleTomarCaso(a.solicitudId)
-                              : navigate(`/solicitudes/${a.solicitudId}`)
-                          }
-                          disabled={asignando === a.solicitudId}
-                          className="bg-ink-900 text-white text-[11.5px] sm:text-[12.5px] font-semibold rounded-[9px] px-3 py-1.5 sm:px-4 sm:py-2 disabled:opacity-60"
+                          onClick={() => navigate(`/solicitudes/${a.solicitudId}`)}
+                          className="bg-ink-900 text-white text-[11.5px] sm:text-[12.5px] font-semibold rounded-[9px] px-3 py-1.5 sm:px-4 sm:py-2"
                         >
-                          {asignando === a.solicitudId
-                            ? 'Asignando...'
-                            : a.accionSugerida === 'tomar_caso'
-                            ? 'Tomar caso'
-                            : 'Revisar'}
+                          Revisar
                         </button>
                       </div>
                     </div>

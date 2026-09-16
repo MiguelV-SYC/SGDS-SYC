@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import { useAuth } from '../context/AuthContext';
 import {
   crearSolicitud,
   getTiposSolicitudPorProyecto,
@@ -52,9 +53,14 @@ const ICONOS_TIPO: Record<string, React.ReactNode> = {
 type TipoAfiliado = 'ciudadano' | 'empresa';
 
 export default function NuevaSolicitudPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const proyectoId = Number(searchParams.get('proyectoId'));
+  // Defensa en profundidad: el backend ya rechaza el POST si el operador no tiene el proyecto
+  // asignado, esto solo evita que llene el formulario completo para nada.
+  const tieneAccesoProyecto = !proyectoId || Boolean(user?.esAdminSyc)
+    || (user?.proyectos.some((p) => Number(p.proyectoId) === proyectoId) ?? false);
   const ciudadanoIdUrl = searchParams.get('ciudadanoId');
   const empresaIdUrl = searchParams.get('empresaId');
   const vehiculoIdUrl = searchParams.get('vehiculoId');
@@ -304,6 +310,15 @@ export default function NuevaSolicitudPage() {
     : [];
   const volverAActual = `/solicitudes/nueva?proyectoId=${proyectoId}${vehiculoIdUrl ? `&vehiculoId=${vehiculoIdUrl}` : ''}`;
   const color = getColorProyecto(proyecto?.nombre);
+
+  if (proyectoId && !tieneAccesoProyecto) {
+    return (
+      <div className="flex min-h-screen bg-paper">
+        <Sidebar active="solicitudes" />
+        <main className="flex-1 flex items-center justify-center text-sm text-ink-400">No tienes acceso a este proyecto.</main>
+      </div>
+    );
+  }
 
   if (proyectoId && !proyecto) {
     return (

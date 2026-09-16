@@ -579,7 +579,9 @@ export default function DetalleSolicitudPage() {
               ) : (
                 <p className="text-xs text-ink-400 italic mb-2">Sin asignar</p>
               )}
-              <button onClick={abrirReasignar} className="text-[12px] font-semibold text-blue-600">Reasignar</button>
+              {(user?.esAdminSyc || user?.esGerencial) && (
+                <button onClick={abrirReasignar} className="text-[12px] font-semibold text-blue-600">Reasignar</button>
+              )}
             </div>
 
             <div className="bg-white border border-line rounded-[14px] p-4">

@@ -221,18 +221,7 @@ public async Task<IActionResult> GetMisConteosPorProyecto()
     public async Task<IActionResult> GetNecesitanAtencion([FromQuery] int limite = 5)
     {
     var usuarioId = int.Parse(User.FindFirst("sub")!.Value);
-    var proyectosPermitidos = User.FindAll("proyecto")
-        .Select(c => int.Parse(c.Value.Split(':')[0]))
-        .ToList();
     var hoy = DateTime.UtcNow.Date;
-
-    var sinAsignar = await _context.Solicitudes
-        .Include(s => s.Proyecto)
-        .Include(s => s.TipoSolicitud)
-        .Include(s => s.Ciudadano)
-        .Where(s => s.FechaCierre == null && s.UsuarioAsignadoId == null
-            && s.ProyectoId != null && proyectosPermitidos.Contains(s.ProyectoId.Value))
-        .ToListAsync();
 
     var requierenAccion = await _context.Solicitudes
         .Include(s => s.Proyecto)
@@ -242,11 +231,8 @@ public async Task<IActionResult> GetMisConteosPorProyecto()
             && (s.Estado == "Requiere información" || s.Estado == "Pendiente"))
         .ToListAsync();
 
-    var items = new List<SolicitudAtencionDto>();
-    items.AddRange(sinAsignar.Select(s => MapearAtencion(s, hoy, esSinAsignar: true)));
-    items.AddRange(requierenAccion.Select(s => MapearAtencion(s, hoy, esSinAsignar: false)));
-
-    var ordenados = items
+    var ordenados = requierenAccion
+        .Select(s => MapearAtencion(s, hoy))
         .OrderBy(i => i.Urgencia == "vence_hoy" ? 0 : i.Urgencia == "vence_manana" ? 1 : 2)
         .Take(limite)
         .ToList();
@@ -254,24 +240,13 @@ public async Task<IActionResult> GetMisConteosPorProyecto()
     return Ok(ordenados);
 }
 
-private SolicitudAtencionDto MapearAtencion(Solicitud s, DateTime hoy, bool esSinAsignar)
+private SolicitudAtencionDto MapearAtencion(Solicitud s, DateTime hoy)
 {
     var urgencia = "normal";
     if (s.FechaLimite.HasValue)
     {
         if (s.FechaLimite.Value.Date == hoy) urgencia = "vence_hoy";
         else if (s.FechaLimite.Value.Date == hoy.AddDays(1)) urgencia = "vence_manana";
-    }
-
-    string estadoDescripcion;
-    if (esSinAsignar)
-    {
-        var dias = (hoy - s.FechaCreacion.Date).Days;
-        estadoDescripcion = dias <= 0 ? "Sin asignar hoy" : $"Sin asignar hace {dias} día{(dias == 1 ? "" : "s")}";
-    }
-    else
-    {
-        estadoDescripcion = s.Estado;
     }
 
     return new SolicitudAtencionDto
@@ -281,9 +256,8 @@ private SolicitudAtencionDto MapearAtencion(Solicitud s, DateTime hoy, bool esSi
         TipoSolicitud = s.TipoSolicitud?.Nombre,
         CiudadanoNombre = s.Ciudadano?.NombreCompleto,
         ProyectoNombre = s.Proyecto?.Nombre ?? string.Empty,
-        EstadoDescripcion = estadoDescripcion,
+        EstadoDescripcion = s.Estado,
         Urgencia = urgencia,
-        AccionSugerida = esSinAsignar ? "tomar_caso" : "revisar"
     };
 }
 
@@ -365,7 +339,11 @@ public async Task<IActionResult> GetListadoSolicitudes(
 
     if (!tieneVisibilidadGlobal)
     {
-        queryBase = queryBase.Where(s => s.ProyectoId != null && proyectosPermitidos.Contains(s.ProyectoId.Value));
+        // Un operador puro ya no navega una bandeja compartida del proyecto — solo ve los
+        // casos que tiene asignados a él mismo (ver "eliminar Tomar caso" en el análisis).
+        var usuarioActualId = int.Parse(User.FindFirst("sub")!.Value);
+        queryBase = queryBase.Where(s => s.ProyectoId != null && proyectosPermitidos.Contains(s.ProyectoId.Value)
+            && s.UsuarioAsignadoId == usuarioActualId);
     }
 
     if (proyectoId.HasValue)
@@ -467,7 +445,10 @@ public async Task<IActionResult> GetListadoSolicitudes(
             VehiculoId = dto.VehiculoId,
             DatosAdicionales = dto.DatosAdicionales,
             Estado = "Radicada",
-            FechaCreacion = DateTime.UtcNow
+            FechaCreacion = DateTime.UtcNow,
+            // El operador que radica queda dueño del caso de una vez — ya no hace falta un paso
+            // aparte de "Tomar caso" (un admin puede reasignarlo después si hace falta).
+            UsuarioAsignadoId = esAdminSyc ? null : int.Parse(User.FindFirst("sub")!.Value),
         };
 
         _context.Solicitudes.Add(nuevaSolicitud);
@@ -622,6 +603,14 @@ public async Task<IActionResult> SubirDocumento(int id, IFormFile archivo)
 
         if (!usuarioExiste)
             return BadRequest(new { mensaje = "El usuario no existe o no está activo" });
+
+        // El destino debe pertenecer al proyecto de la solicitud — si no, se podría "asignar"
+        // un caso a alguien sin acceso a ese proyecto.
+        var perteneceAlProyecto = await _context.UsuarioProyectos
+            .AnyAsync(up => up.UsuarioId == dto.UsuarioId && up.ProyectoId == solicitud.ProyectoId);
+
+        if (!perteneceAlProyecto)
+            return BadRequest(new { mensaje = "El usuario no pertenece al proyecto de esta solicitud." });
 
         solicitud.UsuarioAsignadoId = dto.UsuarioId;
         await _context.SaveChangesAsync();
