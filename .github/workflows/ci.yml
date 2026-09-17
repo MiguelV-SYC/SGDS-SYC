@@ -112,7 +112,14 @@ jobs:
           nohup dotnet run --project SGDS.Api --configuration Release --no-build --urls http://localhost:5158 > backend.log 2>&1 &
           # /api/Proyectos es [AllowAnonymous] y siempre está mapeado — a diferencia de Swagger,
           # que solo se registra en Development, no depende de que el entorno quede como se espera.
-          npx --yes wait-on@8 -t 60000 http://localhost:5158/api/Proyectos
+          # 180s: sobre una Postgres recién creada, EF Core tiene que aplicar TODAS las
+          # migraciones acumuladas del proyecto de una sola vez, no solo la última.
+          npx --yes wait-on@8 -t 180000 -i 2000 http://localhost:5158/api/Proyectos || {
+            echo "::group::backend.log (el backend nunca respondió)"
+            cat backend.log
+            echo "::endgroup::"
+            exit 1
+          }
 
       - name: Sembrar datos de referencia y fixtures de E2E
         run: psql -h localhost -U postgres -d sgds_db -f tests/e2e/fixtures/ci-seed.sql
