@@ -285,3 +285,52 @@ export async function getTiposSolicitudPorProyecto(proyectoId: number): Promise<
   });
   return data;
 }
+
+export interface BeneficiarioCarneDto {
+  nombreCompleto: string;
+  numeroDocumento: string;
+  parentesco: string;
+  categoria: string;
+}
+
+export interface CarneVirtualResponseDto {
+  solicitudId: number;
+  numero: string;
+  afiliadoNombre: string;
+  afiliadoDocumento: string;
+  estadoAfiliacion: string;
+  ingresosMensuales: number;
+  categoria: string;
+  grupoFamiliar: BeneficiarioCarneDto[];
+  fechaExpedicion: string;
+}
+
+export async function getCarneVirtual(id: number): Promise<CarneVirtualResponseDto> {
+  const { data } = await axios.get<CarneVirtualResponseDto>(`${API_URL}/Solicitudes/${id}/carne-virtual`, {
+    headers: authHeader(),
+  });
+  return data;
+}
+
+export async function obtenerCarneVirtualBarcodeBlobUrl(id: number): Promise<string> {
+  const response = await axios.get(`${API_URL}/Solicitudes/${id}/carne-virtual-barcode.png`, {
+    headers: authHeader(),
+    responseType: 'blob',
+  });
+  return window.URL.createObjectURL(new Blob([response.data]));
+}
+
+export async function descargarCarneVirtualPdf(id: number, nombreArchivo: string): Promise<void> {
+  const response = await axios.get(`${API_URL}/Solicitudes/${id}/carne-virtual-pdf`, {
+    headers: authHeader(),
+    responseType: 'blob',
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', nombreArchivo);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}

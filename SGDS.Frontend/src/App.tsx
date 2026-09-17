@@ -32,6 +32,7 @@ import PreliquidacionEstampillasPage from './pages/PreliquidacionEstampillasPage
 import TornaguiaPage from './pages/TornaguiaPage';
 import EstampillaPage from './pages/EstampillaPage';
 import EstampillaArtePage from './pages/EstampillaArtePage';
+import CarneVirtualPage from './pages/CarneVirtualPage';
 import CertificadoTrazabilidadPage from './pages/CertificadoTrazabilidadPage';
 import LiquidacionImpoConsumoPage from './pages/LiquidacionImpoConsumoPage';
 import LiquidacionPasivoLaboralPage from './pages/LiquidacionPasivoLaboralPage';
@@ -183,6 +184,11 @@ function App() {
       <Route
         path="/solicitudes/:id/estampilla/arte"
         element={user ? <EstampillaArtePage /> : <Navigate to="/login" replace />}
+      />
+
+      <Route
+        path="/solicitudes/:id/carne-virtual"
+        element={user ? <CarneVirtualPage /> : <Navigate to="/login" replace />}
       />
 
       <Route

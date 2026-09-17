@@ -32,8 +32,12 @@ public static class DisenoPdfSgds
     private static readonly Lazy<byte[]> _escudoSantander = new(() =>
         File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "escudo-santander.png")));
 
+    private static readonly Lazy<byte[]> _logoComfenalco = new(() =>
+        File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "logo-comfenalco.png")));
+
     public static byte[] LogoSgds => _logoSgds.Value;
     public static byte[] EscudoSantander => _escudoSantander.Value;
+    public static byte[] LogoComfenalco => _logoComfenalco.Value;
 
     // ===== QR / código de barras (antes duplicado en cada controller) =====
     public static byte[] GenerarQrPng(string contenido)

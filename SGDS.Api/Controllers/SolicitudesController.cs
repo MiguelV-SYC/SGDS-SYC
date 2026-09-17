@@ -392,6 +392,12 @@ public async Task<IActionResult> GetListadoSolicitudes(
             return BadRequest(new { mensaje = "No tienes acceso al proyecto indicado." });
         }
 
+        var errorReglaComfenalco = await ValidarReglasComfenalcoAsync(dto.TipoSolicitudId, dto.DatosAdicionales);
+        if (errorReglaComfenalco != null)
+        {
+            return BadRequest(new { mensaje = errorReglaComfenalco });
+        }
+
         var nuevaSolicitud = new Solicitud
         {
             CiudadanoId = dto.CiudadanoId,
@@ -773,6 +779,240 @@ public async Task<IActionResult> SubirDocumento(int id, IFormFile archivo)
 
                 pagina.Footer().PaddingHorizontal(24).PaddingBottom(16).Element(f => DisenoPdfSgds.PiePagina(f,
                     "Preliquidación sujeta a verificación por la Secretaría de Hacienda Departamental de Santander."));
+            });
+        });
+
+        return documento.GeneratePdf();
+    }
+
+    // ===== Comfenalco (ver Reglas_de_Negocio.MD/REGLAS_DE_NEGOCIO_COMFENALCO.md) =====
+
+    private const decimal SmmlvVigente = 1_423_500m; // Ajustar cada enero según el decreto del Gobierno Nacional.
+
+    // Validaciones de radicación propias de Comfenalco, según el tipo de trámite elegido — mismo
+    // patrón "controller gordo" del resto del archivo, agrupado para no repetir el parseo de
+    // DatosAdicionales. RN-SV-004 (cruce con Fonvivienda/Banco Agrario/otras Cajas) y RN-PC-002/003
+    // (seguimiento de capacitación y ofertas laborales durante el beneficio) quedan fuera: dependen
+    // de sistemas externos que este proyecto académico no integra.
+    private async Task<string?> ValidarReglasComfenalcoAsync(int? tipoSolicitudId, string? datosAdicionalesJson)
+    {
+        if (tipoSolicitudId == null) return null;
+        var tipo = await _context.TiposSolicitudes.FindAsync(tipoSolicitudId.Value);
+        if (tipo == null) return null;
+
+        var datos = LeerDatosAdicionales(datosAdicionalesJson);
+        decimal Num(string clave) => decimal.TryParse(datos.GetValueOrDefault(clave), out var v) ? v : 0m;
+
+        switch (tipo.Nombre)
+        {
+            case "Carné virtual":
+                // RN-CV-001: solo se expide el carné si el afiliado está ACTIVO en aportes.
+                if (datos.GetValueOrDefault("estadoAfiliacion") is { } estado && estado != "Activo")
+                    return "Solo se puede expedir el carné si el afiliado está ACTIVO en aportes.";
+                break;
+
+            case "Subsidio de vivienda":
+                // RN-SV-001: techo de 4 SMMLV en los ingresos del grupo familiar postulante.
+                if (Num("ingresosGrupoFamiliar") > SmmlvVigente * 4)
+                    return "Los ingresos del grupo familiar superan 4 SMMLV — no es posible radicar el subsidio de vivienda.";
+                // RN-SV-002: declaración jurada de no propietario, obligatoria para vivienda nueva.
+                if (datos.GetValueOrDefault("declaracionNoPropietario") == "No")
+                    return "Se requiere la declaración jurada de no propietario de vivienda para radicar.";
+                break;
+
+            case "Subsidio de desempleo":
+                // RN-SD-001: mínimo de aportes en los últimos 3 años (12 meses dependiente, 24 independiente).
+                var minimoMeses = datos.GetValueOrDefault("tipoTrabajador") == "Independiente" ? 24 : 12;
+                if (Num("mesesAportados") < minimoMeses)
+                    return $"El postulante no cumple el mínimo de {minimoMeses} meses de aportes en los últimos 3 años.";
+                // RN-SD-002: la última Caja de afiliación debe ser Comfenalco Santander.
+                if (datos.GetValueOrDefault("ultimaCajaAfiliacion") == "Otra caja")
+                    return "La última Caja de afiliación no fue Comfenalco Santander — el trámite debe redirigirse a la Caja correspondiente.";
+                // RN-SD-003: no haber recibido el beneficio en los últimos 3 años.
+                if (DateTime.TryParse(datos.GetValueOrDefault("fechaUltimoBeneficioCesante"), out var fechaUltimo)
+                    && fechaUltimo > DateTime.UtcNow.AddYears(-3))
+                    return "El postulante ya recibió el beneficio del Mecanismo de Protección al Cesante en los últimos 3 años.";
+                break;
+
+            case "Créditos":
+                // RN-CRE-001: la cuota de libranza no puede superar el 50% del salario neto.
+                if (Num("salarioNeto") > 0 && Num("cuotaMensualSolicitada") > Num("salarioNeto") * 0.5m)
+                    return "La cuota mensual solicitada supera el 50% del salario neto — ajusta el monto del crédito.";
+                // RN-CRE-003: para libranza, la empresa debe estar al día en aportes y con convenio activo.
+                if (datos.GetValueOrDefault("modalidadCredito") == "Libranza"
+                    && (datos.GetValueOrDefault("aportesAlDiaComfenalco") == "No" || datos.GetValueOrDefault("convenioLibranzaActivo") == "No"))
+                    return "Para crédito de libranza, la empresa debe estar al día en aportes y tener convenio de libranza activo con la Caja.";
+                break;
+        }
+
+        return null;
+    }
+
+    // RN-CV-002: categorización automática por ingresos en SMMLV.
+    private static string CalcularCategoriaCarne(decimal ingresosMensuales)
+    {
+        var smmlv = ingresosMensuales / SmmlvVigente;
+        if (smmlv <= 2) return "A";
+        if (smmlv <= 4) return "B";
+        return "C";
+    }
+
+    // GET: api/Solicitudes/5/carne-virtual
+    [HttpGet("{id}/carne-virtual")]
+    public async Task<IActionResult> GetCarneVirtual(int id)
+    {
+        var (error, _, dto) = await CalcularCarneVirtualAsync(id);
+        return error ?? Ok(dto);
+    }
+
+    // GET: api/Solicitudes/5/carne-virtual-barcode.png
+    [HttpGet("{id}/carne-virtual-barcode.png")]
+    public async Task<IActionResult> GetCarneVirtualBarcode(int id)
+    {
+        var (error, _, dto) = await CalcularCarneVirtualAsync(id);
+        if (error != null) return error;
+
+        var barcodeBytes = DisenoPdfSgds.GenerarBarcodePng(dto!.Numero);
+        return File(barcodeBytes, "image/png");
+    }
+
+    // GET: api/Solicitudes/5/carne-virtual-pdf
+    [HttpGet("{id}/carne-virtual-pdf")]
+    public async Task<IActionResult> GetCarneVirtualPdf(int id)
+    {
+        var (error, _, dto) = await CalcularCarneVirtualAsync(id);
+        if (error != null) return error;
+
+        var barcodeBytes = DisenoPdfSgds.GenerarBarcodePng(dto!.Numero);
+        var pdfBytes = GenerarCarneVirtualPdf(dto, barcodeBytes);
+        return File(pdfBytes, "application/pdf", $"Carne_Virtual_{dto.Numero}.pdf");
+    }
+
+    private async Task<(IActionResult? Error, Solicitud? Solicitud, CarneVirtualResponseDto? Dto)> CalcularCarneVirtualAsync(int id)
+    {
+        var esAdminSyc = User.FindFirst("esAdminSyc")?.Value == "True";
+        var proyectosPermitidos = User.FindAll("proyecto")
+            .Select(c => int.Parse(c.Value.Split(':')[0]))
+            .ToList();
+
+        var solicitud = await _context.Solicitudes
+            .Include(s => s.Ciudadano)
+            .Include(s => s.Proyecto)
+            .Include(s => s.TipoSolicitud)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (solicitud == null)
+            return (NotFound(), null, null);
+
+        if (!esAdminSyc && (solicitud.ProyectoId == null || !proyectosPermitidos.Contains(solicitud.ProyectoId.Value)))
+            return (NotFound(), null, null);
+
+        if (solicitud.TipoSolicitud?.Nombre != "Carné virtual")
+            return (BadRequest(new { mensaje = "Esta solicitud no corresponde a un trámite de Carné virtual." }), null, null);
+
+        var datos = LeerDatosAdicionales(solicitud.DatosAdicionales);
+
+        // RN-CV-001, revalidado al consultar: si el estado registrado ya no es ACTIVO, el carné no se muestra.
+        if (datos.GetValueOrDefault("estadoAfiliacion") != "Activo")
+            return (BadRequest(new { mensaje = "El afiliado no está ACTIVO en aportes — no se puede expedir el carné." }), null, null);
+
+        var ingresos = decimal.TryParse(datos.GetValueOrDefault("ingresosMensuales"), out var i) ? i : 0m;
+        var categoria = CalcularCategoriaCarne(ingresos);
+
+        var grupoFamiliar = new List<BeneficiarioCarneDto>();
+        if (datos.TryGetValue("grupoFamiliar", out var grupoFamiliarJson) && !string.IsNullOrWhiteSpace(grupoFamiliarJson))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(grupoFamiliarJson);
+                foreach (var b in doc.RootElement.EnumerateArray())
+                {
+                    var ingresosBeneficiario = b.TryGetProperty("ingresosMensuales", out var ib) && ib.TryGetDecimal(out var iv) ? iv : 0m;
+                    grupoFamiliar.Add(new BeneficiarioCarneDto
+                    {
+                        NombreCompleto = b.GetProperty("nombreCompleto").GetString() ?? "",
+                        NumeroDocumento = b.GetProperty("numeroDocumento").GetString() ?? "",
+                        Parentesco = b.GetProperty("parentesco").GetString() ?? "",
+                        Categoria = CalcularCategoriaCarne(ingresosBeneficiario),
+                    });
+                }
+            }
+            catch (JsonException) { }
+        }
+
+        var numero = solicitud.Proyecto != null ? $"{solicitud.Proyecto.Codigo}-{solicitud.Id:0000}" : solicitud.Id.ToString();
+
+        var dto = new CarneVirtualResponseDto
+        {
+            SolicitudId = solicitud.Id,
+            Numero = numero,
+            AfiliadoNombre = solicitud.Ciudadano?.NombreCompleto ?? "—",
+            AfiliadoDocumento = solicitud.Ciudadano != null ? $"{solicitud.Ciudadano.TipoDocumento} {solicitud.Ciudadano.NumeroDocumento}" : "—",
+            EstadoAfiliacion = "Activo",
+            IngresosMensuales = ingresos,
+            Categoria = categoria,
+            GrupoFamiliar = grupoFamiliar,
+            FechaExpedicion = solicitud.FechaCreacion,
+        };
+
+        return (null, solicitud, dto);
+    }
+
+    private byte[] GenerarCarneVirtualPdf(CarneVirtualResponseDto dto, byte[] barcodeBytes)
+    {
+        var documento = Document.Create(contenedor =>
+        {
+            contenedor.Page(pagina =>
+            {
+                pagina.Size(PageSizes.A4);
+                pagina.Margin(0);
+                pagina.DefaultTextStyle(x => x.FontSize(10));
+
+                pagina.Header().Background("#047857").Padding(20).Row(row =>
+                {
+                    row.ConstantItem(70).Height(50).Image(DisenoPdfSgds.LogoComfenalco).FitArea();
+                    row.ConstantItem(12);
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("COMFENALCO SANTANDER").FontSize(9).Bold().FontColor(Colors.White).LetterSpacing(0.1f);
+                        col.Item().PaddingTop(4).Text("Carné virtual de afiliación").FontSize(15).Bold().FontColor(Colors.White);
+                        col.Item().Text($"N.° {dto.Numero}").FontSize(9).FontColor(Colors.Grey.Lighten3);
+                    });
+                });
+
+                pagina.Content().Padding(24).Column(col =>
+                {
+                    DisenoPdfSgds.SeccionTabla(col, "Afiliado",
+                        ("Nombre", dto.AfiliadoNombre),
+                        ("Documento", dto.AfiliadoDocumento),
+                        ("Estado de afiliación", dto.EstadoAfiliacion),
+                        ("Categoría", $"Categoría {dto.Categoria}"),
+                        ("Ingresos mensuales", dto.IngresosMensuales.ToString("C0", new System.Globalization.CultureInfo("es-CO"))));
+
+                    if (dto.GrupoFamiliar.Count > 0)
+                    {
+                        col.Item().PaddingTop(12).Text("Grupo familiar").FontSize(10.5f).Bold().FontColor(DisenoPdfSgds.Blue600);
+                        col.Item().PaddingTop(4).Table(t =>
+                        {
+                            t.ColumnsDefinition(c => { c.RelativeColumn(3); c.RelativeColumn(2); c.RelativeColumn(2); c.RelativeColumn(1); });
+                            DisenoPdfSgds.TablaEncabezado(t, "Nombre", "Documento", "Parentesco", "Cat.");
+                            for (var idx = 0; idx < dto.GrupoFamiliar.Count; idx++)
+                            {
+                                var b = dto.GrupoFamiliar[idx];
+                                var fondo = idx % 2 == 0 ? "#FFFFFF" : DisenoPdfSgds.Paper;
+                                t.Cell().Background(fondo).BorderBottom(0.5f).BorderColor(DisenoPdfSgds.Line).Padding(6).Text(b.NombreCompleto).FontSize(9);
+                                t.Cell().Background(fondo).BorderBottom(0.5f).BorderColor(DisenoPdfSgds.Line).Padding(6).Text(b.NumeroDocumento).FontSize(9);
+                                t.Cell().Background(fondo).BorderBottom(0.5f).BorderColor(DisenoPdfSgds.Line).Padding(6).Text(b.Parentesco).FontSize(9);
+                                t.Cell().Background(fondo).BorderBottom(0.5f).BorderColor(DisenoPdfSgds.Line).Padding(6).Text(b.Categoria).FontSize(9);
+                            }
+                        });
+                    }
+
+                    col.Item().PaddingTop(16).Image(barcodeBytes).FitWidth();
+                });
+
+                pagina.Footer().PaddingHorizontal(24).PaddingBottom(16).Element(f => DisenoPdfSgds.PiePagina(f,
+                    "Carné válido mientras el afiliado permanezca ACTIVO en aportes — sujeto a verificación en línea por Comfenalco Santander."));
             });
         });
 

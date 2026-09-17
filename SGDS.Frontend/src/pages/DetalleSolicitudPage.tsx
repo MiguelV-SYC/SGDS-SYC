@@ -308,6 +308,17 @@ export default function DetalleSolicitudPage() {
                 </button>
               </>
             )}
+            {solicitud.proyectoNombre === 'Comfenalco' && solicitud.tipoSolicitudNombre === 'Carné virtual' && (
+              <button
+                onClick={() => navigate(`/solicitudes/${solicitud.id}/carne-virtual`)}
+                className="flex items-center gap-1.5 bg-white border border-line text-ink-600 rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold hover:bg-paper"
+              >
+                <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" className="w-[13px] h-[13px] stroke-ink-600">
+                  <rect x="6" y="3" width="12" height="18" rx="2" />
+                </svg>
+                Carné virtual
+              </button>
+            )}
             {solicitud.proyectoNombre === 'SYCTrace' && (
               <button
                 onClick={() => navigate(`/solicitudes/${solicitud.id}/estampilla`)}
@@ -487,9 +498,13 @@ export default function DetalleSolicitudPage() {
 
               {datosAdicionales && Object.keys(datosAdicionales).length > 0 && (
                 <div className="mt-4 bg-paper rounded-[9px] px-4 py-3 text-[12.5px] text-ink-900 flex flex-wrap gap-x-5 gap-y-1.5">
-                  {Object.entries(datosAdicionales).map(([k, v]) => (
-                    <span key={k}><b className="capitalize">{k}:</b> {v || '—'}</span>
-                  ))}
+                  {Object.entries(datosAdicionales)
+                    // Objetos/arrays (ej. grupoFamiliar de Carné virtual) tienen su propia vista
+                    // dedicada — este resumen genérico solo sabe mostrar pares clave:texto.
+                    .filter(([, v]) => typeof v !== 'object' || v === null)
+                    .map(([k, v]) => (
+                      <span key={k}><b className="capitalize">{k}:</b> {v || '—'}</span>
+                    ))}
                 </div>
               )}
             </div>

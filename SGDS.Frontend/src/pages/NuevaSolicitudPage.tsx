@@ -38,6 +38,14 @@ import { crearSolicitudPasivosLaborales } from '../services/pasivosLaboralesServ
 import { DATOS_TURNO_VACIOS, fechaHoraCitaISO, type DatosTurno } from '../config/libroTotalConfig';
 import FormularioTurno from '../components/librototal/FormularioTurno';
 import { agendarTurno } from '../services/libroTotalService';
+import {
+  DATOS_CARNE_VACIOS, construirDatosAdicionalesCarneVirtual, type DatosCarneVirtual,
+  DATOS_SUBSIDIO_DESEMPLEO_VACIOS, construirDatosAdicionalesSubsidioDesempleo, type DatosSubsidioDesempleo,
+  DATOS_CREDITOS_VACIOS, construirDatosAdicionalesCreditos, type DatosCreditos,
+} from '../config/comfenalcoConfig';
+import FormularioCarneVirtual from '../components/comfenalco/FormularioCarneVirtual';
+import FormularioSubsidioDesempleo from '../components/comfenalco/FormularioSubsidioDesempleo';
+import FormularioCreditos from '../components/comfenalco/FormularioCreditos';
 
 const ICONOS_TIPO: Record<string, React.ReactNode> = {
   'Subsidio de vivienda': <path d="M3 11l9-8 9 8M5 10v10h14V10" />,
@@ -114,6 +122,15 @@ export default function NuevaSolicitudPage() {
   // Datos específicos del trámite Libro Total — Agendamiento de turno (sede + trámite + horario)
   const [datosTurno, setDatosTurno] = useState<DatosTurno>(DATOS_TURNO_VACIOS);
 
+  // Datos específicos de Comfenalco — Carné virtual (estado de afiliación + grupo familiar)
+  const [datosCarneVirtual, setDatosCarneVirtual] = useState<DatosCarneVirtual>(DATOS_CARNE_VACIOS);
+
+  // Datos específicos de Comfenalco — Subsidio de desempleo (meses de aportes por selección)
+  const [datosSubsidioDesempleo, setDatosSubsidioDesempleo] = useState<DatosSubsidioDesempleo>(DATOS_SUBSIDIO_DESEMPLEO_VACIOS);
+
+  // Datos específicos de Comfenalco — Créditos (simulador con tasas de la Superfinanciera)
+  const [datosCreditos, setDatosCreditos] = useState<DatosCreditos>(DATOS_CREDITOS_VACIOS);
+
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,6 +141,9 @@ export default function NuevaSolicitudPage() {
   const esGoTrace = proyecto?.nombre === 'Gotrace';
   const esPasivosLaborales = proyecto?.nombre === 'Pasivos Laborales';
   const esLibroTotal = proyecto?.nombre === 'Libro Total';
+  const esCarneVirtual = proyecto?.nombre === 'Comfenalco' && tipoSeleccionado?.nombre === 'Carné virtual';
+  const esSubsidioDesempleo = proyecto?.nombre === 'Comfenalco' && tipoSeleccionado?.nombre === 'Subsidio de desempleo';
+  const esCreditos = proyecto?.nombre === 'Comfenalco' && tipoSeleccionado?.nombre === 'Créditos';
 
   useEffect(() => {
     if (!proyectoId) return;
@@ -401,6 +421,27 @@ export default function NuevaSolicitudPage() {
       setError('Ingresa el valor total del contrato para continuar.');
       return;
     }
+    if (esCarneVirtual) {
+      if (!datosCarneVirtual.ingresosMensuales) {
+        setError('Ingresa los ingresos mensuales del afiliado para continuar.');
+        return;
+      }
+      if (datosCarneVirtual.estadoAfiliacion !== 'Activo') {
+        setError('Solo se puede expedir el carné si el afiliado está ACTIVO en aportes.');
+        return;
+      }
+    }
+    if (esSubsidioDesempleo) {
+      const minimo = datosSubsidioDesempleo.tipoTrabajador === 'Independiente' ? 24 : 12;
+      if (datosSubsidioDesempleo.mesesSeleccionados.length < minimo) {
+        setError(`Marca al menos ${minimo} meses de aportes para continuar.`);
+        return;
+      }
+    }
+    if (esCreditos && !datosCreditos.salarioNeto) {
+      setError('Ingresa el salario neto para continuar.');
+      return;
+    }
     if (esInfoconsumo) {
       if (!datosTornaguia.categoriaProducto || !datosTornaguia.subcategoriaProducto) {
         setError('Selecciona la categoría y la subcategoría del producto para continuar.');
@@ -589,9 +630,15 @@ export default function NuevaSolicitudPage() {
         })
       : esEstampillas
         ? JSON.stringify(construirDatosAdicionalesEstampillas(datosContrato, tipoSeleccionado.nombre))
-        : campos
-          ? JSON.stringify(datosTramite)
-          : JSON.stringify({ observaciones });
+        : esCarneVirtual
+          ? JSON.stringify(construirDatosAdicionalesCarneVirtual(datosCarneVirtual))
+          : esSubsidioDesempleo
+            ? JSON.stringify(construirDatosAdicionalesSubsidioDesempleo(datosSubsidioDesempleo))
+            : esCreditos
+              ? JSON.stringify(construirDatosAdicionalesCreditos(datosCreditos))
+              : campos
+            ? JSON.stringify(datosTramite)
+            : JSON.stringify({ observaciones });
 
     setGuardando(true);
     try {
@@ -1086,7 +1133,29 @@ export default function NuevaSolicitudPage() {
           <FormularioTurno value={datosTurno} onChange={setDatosTurno} />
         )}
 
-        {!esIUVA && !esEstampillas && !esInfoconsumo && !esSycTrace && !esGoTrace && !esPasivosLaborales && !esLibroTotal && (
+        {esCarneVirtual && (
+          <div className="bg-white border border-line rounded-[14px] p-5 mb-5">
+            <h3 className="font-display text-[13.5px] font-semibold text-ink-900 mb-4">3. Carné virtual</h3>
+            <FormularioCarneVirtual value={datosCarneVirtual} onChange={setDatosCarneVirtual} />
+          </div>
+        )}
+
+        {esSubsidioDesempleo && (
+          <div className="bg-white border border-line rounded-[14px] p-5 mb-5">
+            <h3 className="font-display text-[13.5px] font-semibold text-ink-900 mb-4">3. Aportes y afiliación</h3>
+            <FormularioSubsidioDesempleo value={datosSubsidioDesempleo} onChange={setDatosSubsidioDesempleo} />
+          </div>
+        )}
+
+        {esCreditos && (
+          <div className="bg-white border border-line rounded-[14px] p-5 mb-5">
+            <h3 className="font-display text-[13.5px] font-semibold text-ink-900 mb-4">3. Datos del crédito</h3>
+            <FormularioCreditos value={datosCreditos} onChange={setDatosCreditos} />
+          </div>
+        )}
+
+        {!esIUVA && !esEstampillas && !esInfoconsumo && !esSycTrace && !esGoTrace && !esPasivosLaborales && !esLibroTotal
+          && !esCarneVirtual && !esSubsidioDesempleo && !esCreditos && (
           <div className="bg-white border border-line rounded-[14px] p-5 mb-5">
             <h3 className="font-display text-[13.5px] font-semibold text-ink-900 mb-4">3. Datos específicos del trámite</h3>
             {campos ? (
