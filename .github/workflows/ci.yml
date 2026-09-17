@@ -79,6 +79,9 @@ jobs:
           --health-retries 5
 
     env:
+      # Development (no solo para Swagger): así el comportamiento del backend en CI coincide con
+      # el de tu máquina en vez de caer en el default "Production" de GitHub Actions.
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__SgdsConnection: Host=localhost;Port=5432;Database=sgds_db;Username=postgres;Password=postgres
       # Clave exclusiva de este pipeline — nunca la clave real de desarrollo/producción (esa vive
       # en dotnet user-secrets y no se commitea). Solo firma tokens de una API que muere al
@@ -107,7 +110,9 @@ jobs:
         run: |
           dotnet build SGDS.Api --configuration Release
           nohup dotnet run --project SGDS.Api --configuration Release --no-build --urls http://localhost:5158 > backend.log 2>&1 &
-          npx --yes wait-on@8 -t 60000 http://localhost:5158/swagger/index.html
+          # /api/Proyectos es [AllowAnonymous] y siempre está mapeado — a diferencia de Swagger,
+          # que solo se registra en Development, no depende de que el entorno quede como se espera.
+          npx --yes wait-on@8 -t 60000 http://localhost:5158/api/Proyectos
 
       - name: Sembrar datos de referencia y fixtures de E2E
         run: psql -h localhost -U postgres -d sgds_db -f tests/e2e/fixtures/ci-seed.sql
