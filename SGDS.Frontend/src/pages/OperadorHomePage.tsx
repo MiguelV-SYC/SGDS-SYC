@@ -1,21 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/layout/Sidebar';
-import { useNavigate } from 'react-router-dom';
 import {
   getMisIndicadores,
-  getNecesitanAtencion,
   getMiCola,
   type IndicadoresOperadorDto,
-  type NecesitaAtencionDto,
   type ColaTrabajoDto,
 } from '../services/solicitudService';
-
-const URGENCIA_STYLE: Record<string, { borde: string; texto: string; label: string }> = {
-  vence_hoy: { borde: 'border-red-500', texto: 'text-red-600', label: 'Vence hoy' },
-  vence_manana: { borde: 'border-amber-500', texto: 'text-amber-600', label: 'Vence mañana' },
-  normal: { borde: 'border-ink-400', texto: 'text-ink-600', label: '' },
-};
 
 const ESTADO_STYLE: Record<string, string> = {
   Radicada: 'bg-[#f1f5f9] text-[#64748b]',
@@ -28,19 +19,16 @@ const ESTADO_STYLE: Record<string, string> = {
 
 export default function OperadorHomePage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const primerNombre = user?.nombreCompleto?.split(' ')[0] ?? '';
 
   const [indicadores, setIndicadores] = useState<IndicadoresOperadorDto | null>(null);
-  const [atencion, setAtencion] = useState<NecesitaAtencionDto[]>([]);
   const [cola, setCola] = useState<ColaTrabajoDto[]>([]);
   const [filtroCola, setFiltroCola] = useState<'todas' | 'en_revision' | 'pendientes'>('todas');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getMisIndicadores(), getNecesitanAtencion(5)]).then(([i, a]) => {
+    getMisIndicadores().then((i) => {
       setIndicadores(i);
-      setAtencion(a);
       setLoading(false);
     });
   }, []);
@@ -97,53 +85,6 @@ export default function OperadorHomePage() {
                 <div className="text-[11.5px] text-ink-600 mt-1">Completadas esta semana</div>
               </div>
             </div>
-
-            <div className="flex items-center justify-between mb-3.5">
-              <h2 className="font-display text-[15px] font-semibold text-ink-900">Necesitan tu atención</h2>
-              {atencion.length > 0 && (
-                <button onClick={() => navigate('/solicitudes')} className="text-[12.5px] font-semibold text-blue-600">
-                  Ver todas
-                </button>
-              )}
-            </div>
-
-            {atencion.length === 0 ? (
-              <div className="bg-white border border-line rounded-2xl px-6 py-8 text-center mb-8">
-                <p className="text-sm text-ink-600">No tienes casos urgentes por atender ahora mismo.</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2.5 mb-8">
-                {atencion.map((a) => {
-                  const estilo = URGENCIA_STYLE[a.urgencia];
-                  return (
-                    <div
-                      key={a.solicitudId}
-                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-white border border-line border-l-[3px] ${estilo.borde} rounded-xl px-5 py-3.5`}
-                    >
-                      <div>
-                        <div className="text-[13.5px] font-semibold text-ink-900">
-                          #{a.numero} · {a.tipoSolicitud} — {a.ciudadanoNombre}
-                        </div>
-                        <div className="text-[12px] text-ink-600 mt-0.5">
-                          {a.proyectoNombre} · {a.estadoDescripcion}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3.5">
-                        {estilo.label && (
-                          <span className={`text-[12px] font-semibold ${estilo.texto}`}>{estilo.label}</span>
-                        )}
-                        <button
-                          onClick={() => navigate(`/solicitudes/${a.solicitudId}`)}
-                          className="bg-ink-900 text-white text-[11.5px] sm:text-[12.5px] font-semibold rounded-[9px] px-3 py-1.5 sm:px-4 sm:py-2"
-                        >
-                          Revisar
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             <div className="bg-white border border-line rounded-2xl overflow-hidden">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 px-5 py-4 border-b border-line">

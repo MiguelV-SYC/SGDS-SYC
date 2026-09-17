@@ -55,17 +55,6 @@ public class IndicadoresOperadorDto
     public int CompletadasEstaSemana { get; set; }
 }
 
-public class SolicitudAtencionDto
-{
-    public int SolicitudId { get; set; }
-    public string Numero { get; set; } = string.Empty;
-    public string? TipoSolicitud { get; set; }
-    public string? CiudadanoNombre { get; set; }
-    public string ProyectoNombre { get; set; } = string.Empty;
-    public string EstadoDescripcion { get; set; } = string.Empty;
-    public string Urgencia { get; set; } = string.Empty;
-}
-
 public class SolicitudColaDto
 {
     public int SolicitudId { get; set; }

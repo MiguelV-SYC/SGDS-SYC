@@ -15,16 +15,6 @@ export interface IndicadoresOperadorDto {
     completadasEstaSemana: number; 
 }
 
-export interface NecesitaAtencionDto {
-    solicitudId: number; 
-    numero: string; 
-    tipoSolicitud: string; 
-    ciudadanoNombre: string;
-    proyectoNombre: string; 
-    estadoDescripcion: string; 
-    urgencia: 'vence_hoy' | 'vence_mañana' | 'normal';
-}
-
 export interface ColaTrabajoDto {
     solicitudId: number;
     numero: string;
@@ -54,14 +44,6 @@ export async function getMisIndicadores(): Promise<IndicadoresOperadorDto> {
         headers: authHeader(),
     });
     return data;
-}
-
-export async function getNecesitanAtencion(limite = 5): Promise<NecesitaAtencionDto[]> {
-    const { data } = await axios.get<NecesitaAtencionDto[]>(
-        `${API_URL}/Solicitudes/necesitan-atencion`,
-        { params: { limite }, headers: authHeader() }
-    );
-    return data; 
 }
 
 export async function getMiCola(params: {

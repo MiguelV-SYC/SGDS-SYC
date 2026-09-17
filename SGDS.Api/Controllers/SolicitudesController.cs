@@ -217,50 +217,6 @@ public async Task<IActionResult> GetMisConteosPorProyecto()
         return Ok(indicadores);
     }
 
-    [HttpGet("necesitan-atencion")]
-    public async Task<IActionResult> GetNecesitanAtencion([FromQuery] int limite = 5)
-    {
-    var usuarioId = int.Parse(User.FindFirst("sub")!.Value);
-    var hoy = DateTime.UtcNow.Date;
-
-    var requierenAccion = await _context.Solicitudes
-        .Include(s => s.Proyecto)
-        .Include(s => s.TipoSolicitud)
-        .Include(s => s.Ciudadano)
-        .Where(s => s.FechaCierre == null && s.UsuarioAsignadoId == usuarioId
-            && (s.Estado == "Requiere información" || s.Estado == "Pendiente"))
-        .ToListAsync();
-
-    var ordenados = requierenAccion
-        .Select(s => MapearAtencion(s, hoy))
-        .OrderBy(i => i.Urgencia == "vence_hoy" ? 0 : i.Urgencia == "vence_manana" ? 1 : 2)
-        .Take(limite)
-        .ToList();
-
-    return Ok(ordenados);
-}
-
-private SolicitudAtencionDto MapearAtencion(Solicitud s, DateTime hoy)
-{
-    var urgencia = "normal";
-    if (s.FechaLimite.HasValue)
-    {
-        if (s.FechaLimite.Value.Date == hoy) urgencia = "vence_hoy";
-        else if (s.FechaLimite.Value.Date == hoy.AddDays(1)) urgencia = "vence_manana";
-    }
-
-    return new SolicitudAtencionDto
-    {
-        SolicitudId = s.Id,
-        Numero = s.Proyecto != null ? $"{s.Proyecto.Codigo}-{s.Id:0000}" : s.Id.ToString(),
-        TipoSolicitud = s.TipoSolicitud?.Nombre,
-        CiudadanoNombre = s.Ciudadano?.NombreCompleto,
-        ProyectoNombre = s.Proyecto?.Nombre ?? string.Empty,
-        EstadoDescripcion = s.Estado,
-        Urgencia = urgencia,
-    };
-}
-
     [HttpGet("mi-cola")]
     public async Task<IActionResult> GetMiCola([FromQuery] int? proyectoId, [FromQuery] string filtro = "todas")
     {
