@@ -1,0 +1,528 @@
+<title>Plan de Pruebas SGDS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f7f9fc;
+    --surface: #ffffff;
+    --border: #e4e9f2;
+    --ink-900: #0f1a2e;
+    --ink-600: #5b6b85;
+    --ink-400: #94a3b8;
+    --navy-950: #0a1730;
+    --blue-600: #2f6fed;
+    --blue-50: #eef3ff;
+    --green-600: #047857;
+    --green-50: #d1fae5;
+    --amber-600: #b45309;
+    --amber-50: #fef3c7;
+    --slate-600: #475569;
+    --slate-50: #f1f5f9;
+    --font-display: 'Source Serif 4', Georgia, serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a1019;
+      --surface: #101a2c;
+      --border: #223049;
+      --ink-900: #eef2f9;
+      --ink-600: #a9b6cc;
+      --ink-400: #6b7a96;
+      --blue-50: #16233d;
+      --green-50: #0d2b22;
+      --amber-50: #2b210c;
+      --slate-50: #1a2333;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a1019;
+    --surface: #101a2c;
+    --border: #223049;
+    --ink-900: #eef2f9;
+    --ink-600: #a9b6cc;
+    --ink-400: #6b7a96;
+    --blue-50: #16233d;
+    --green-50: #0d2b22;
+    --amber-50: #2b210c;
+    --slate-50: #1a2333;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink-900);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    padding-bottom: 60px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 16px; }
+
+  header.hero {
+    background: linear-gradient(120deg, var(--navy-950), #122a58 65%, var(--blue-600));
+    color: white;
+    padding: 40px 0 34px;
+  }
+  header.hero .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9fc0ff;
+    margin: 0 0 10px;
+  }
+  header.hero h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(26px, 4vw, 34px);
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  header.hero p.sub {
+    max-width: 62ch;
+    color: #cdd9f2;
+    margin: 0 0 22px;
+    font-size: 14.5px;
+  }
+
+  .progress-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    backdrop-filter: blur(2px);
+  }
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255,255,255,0.15);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4d8bff, #7ee0c1);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .progress-label {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: white;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  main { padding-top: 30px; }
+
+  .guide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 28px;
+  }
+  .guide h2, section.module h2 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .guide .desc, section.module .desc {
+    color: var(--ink-600);
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+  .guide ol { margin: 0; padding-left: 20px; }
+  .guide li { margin-bottom: 12px; }
+  .guide li:last-child { margin-bottom: 0; }
+  code, .code-block {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+  }
+  code {
+    background: var(--slate-50);
+    padding: 1px 6px;
+    border-radius: 5px;
+  }
+  .code-block {
+    display: block;
+    background: var(--navy-950);
+    color: #d7e3fb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 8px 0 0;
+  }
+  .code-block .cm { color: #7f97c7; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 99px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pill.ready { background: var(--green-50); color: var(--green-600); }
+  .pill.setup { background: var(--amber-50); color: var(--amber-600); }
+  .pill.refactor { background: var(--slate-50); color: var(--slate-600); }
+
+  section.module {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 18px;
+    overflow: hidden;
+  }
+  section.module .head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  section.module .head .titles { flex: 1; min-width: 0; }
+  section.module .count {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-400);
+    white-space: nowrap;
+  }
+  section.module .chevron {
+    width: 18px; height: 18px; flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: var(--ink-400);
+  }
+  section.module.collapsed .chevron { transform: rotate(-90deg); }
+  section.module .body { padding: 6px 24px 18px; }
+  section.module.collapsed .body { display: none; }
+
+  ul.cases { list-style: none; margin: 0; padding: 0; }
+  ul.cases li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  ul.cases li:last-child { border-bottom: none; }
+  ul.cases input[type="checkbox"] {
+    margin-top: 3px;
+    width: 15px;
+    height: 15px;
+    accent-color: var(--blue-600);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  ul.cases label { flex: 1; cursor: pointer; }
+  ul.cases .case-title {
+    font-weight: 500;
+    color: var(--ink-900);
+    display: block;
+  }
+  ul.cases input:checked ~ .case-title,
+  ul.cases label:has(input:checked) .case-title {
+    text-decoration: line-through;
+    color: var(--ink-400);
+  }
+  ul.cases .case-why {
+    color: var(--ink-600);
+    font-size: 12.5px;
+    display: block;
+    margin-top: 2px;
+  }
+  ul.cases .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .tag.ready { background: var(--green-50); color: var(--green-600); }
+  .tag.setup { background: var(--amber-50); color: var(--amber-600); }
+  .tag.refactor { background: var(--slate-50); color: var(--slate-600); }
+
+  footer {
+    max-width: 880px;
+    margin: 20px auto 0;
+    padding: 0 16px;
+    color: var(--ink-400);
+    font-size: 12px;
+  }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">SGDS · xUnit + Playwright</p>
+    <h1>Plan de pruebas</h1>
+    <p class="sub">Guía para escribir pruebas con xUnit sobre lo que ya existe en <code style="background:rgba(255,255,255,0.12);color:#eaf0ff">SGDS.Application.Tests</code>, más el catálogo completo de casos posibles por módulo — marca los que vayas cubriendo.</p>
+    <div class="progress-card">
+      <span class="progress-label" id="progress-label">0 / 0 casos</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="guide">
+    <h2>Cómo construir una prueba nueva</h2>
+    <p class="desc">Tu proyecto <code>tests/SGDS.Application.Tests</code> ya está listo para correr — solo referencia <code>SGDS.Application</code>, así que hoy puede probar directamente los <code>Helpers</code> (calculadoras) sin tocar nada más.</p>
+    <ol>
+      <li><b>Un archivo por clase que pruebas.</b> Crea <code>CalculadoraXxxTests.cs</code> junto a <code>UnitTest1.cs</code> (puedes renombrar ese archivo — su nombre no importa para xUnit, solo el de la clase).</li>
+      <li><b>Patrón AAA</b> (Arrange / Act / Assert), igual que tu prueba existente:
+        <span class="code-block"><span class="cm">// Arrange</span>
+var config = new ConfiguracionEstampillas();
+var entrada = new CalculadoraEstampillas.Entrada(
+    ValorContratoBruto: 100_000_000m, IncluyeIva: false, TarifaIva: 0,
+    TipoEntidad: CalculadoraEstampillas.TipoEntidadGobernacion,
+    RegimenContratista: CalculadoraEstampillas.RegimenDeclaranteRenta,
+    TipoContrato: CalculadoraEstampillas.TipoContratoObra,
+    FuenteRecursos: CalculadoraEstampillas.FuenteRecursosPropios,
+    Municipio: "Bucaramanga");
+
+<span class="cm">// Act</span>
+var resultado = CalculadoraEstampillas.Calcular(entrada, config);
+
+<span class="cm">// Assert</span>
+Assert.Equal(2_000_000m, resultado.Items.Single(i => i.Nombre == "Pro-Hospital").Valor);</span>
+      </li>
+      <li><b>Un caso por variante → <code>[Theory]</code> + <code>[InlineData]</code></b>, como ya haces con <code>ObtenerValorPorAnio</code>. Úsalo para tablas de decisión (categoría → tarifa, año → valor, tipo → mínimo), y <code>[Fact]</code> para casos únicos (una excepción, un flujo puntual).</li>
+      <li><b>Excepciones esperadas:</b> <code>Assert.Throws&lt;ArgumentException&gt;(() =&gt; CalculadoraEstampillas.Validar(entradaInvalida));</code></li>
+      <li><b>Corre todo con</b> <code>dotnet test tests/SGDS.Application.Tests</code> desde la raíz del repo.</li>
+      <li><b>Actualización</b>: las reglas de Comfenalco (<code>CalcularCategoriaCarne</code>, <code>Validar</code>) ya se movieron a <code>SGDS.Application/Helpers/ReglasComfenalco.cs</code> — mismo patrón que <code>CalculadoraEstampillas</code> — así que hoy se prueban directo, sin reflexión ni referenciar <code>SGDS.Api</code>. El controller solo resuelve el <code>TipoSolicitud</code> por id y delega. Lo único que sigue quedando fuera de <code>SGDS.Application.Tests</code> son las pruebas de integración de los Controllers (auto-asignación, listado restringido, la cadena GoTrace→Infoconsumo→SycTrace) — esas sí necesitan <code>Microsoft.EntityFrameworkCore.InMemory</code> + un <code>ClaimsPrincipal</code> de prueba.</li>
+      <li><b>Frontend</b> (<code>SGDS.Frontend/src/config/*.ts</code>): no hay corredor de pruebas unitarias todavía — solo <code>tests/example.spec.ts</code> de Playwright (E2E, sin instalar como dependencia del proyecto todavía). Para probar funciones puras como <code>calcularCuotaCredito</code> o <code>calcularCategoriaCarne</code> del lado del frontend haría falta instalar <code>vitest</code>.</li>
+    </ol>
+  </div>
+
+  <div class="legend">
+    <span class="pill ready">Listo para escribir ya</span>
+    <span class="pill setup">Necesita InMemory DB / mock de claims</span>
+    <span class="pill refactor">Necesita mover código a un Helper público</span>
+  </div>
+
+  <!-- Modules injected by JS from DATA below -->
+  <div id="modules"></div>
+
+</main>
+
+<footer>Casos derivados de la lectura del código actual (<code>SGDS.Application/Helpers</code>, <code>SGDS.Api/Controllers/SolicitudesController.cs</code>, <code>SGDS.Frontend/src/config/comfenalcoConfig.ts</code>) — el estado de marcado se guarda solo en este navegador.</footer>
+
+<script>
+(function () {
+  var DATA = [
+    {
+      id: 'dv', title: 'CalculadoraDv — dígito de verificación NIT', file: 'SGDS.Application/Helpers/CalculadoraDv.cs',
+      cases: [
+        ['ready', 'NIT limpio de referencia', 'Con los pesos [3,7,13,...,71] del código actual, "900123456" produce DV = 8 — fija este vector como regresión (recalcúlalo a mano si cambias el algoritmo).'],
+        ['ready', 'NIT con puntos y guion ("900.123.456-8")', 'Debe limpiar todo lo que no sea dígito antes de calcular — mismo resultado que el NIT sin formato.'],
+        ['ready', 'Cadena vacía o solo letras', 'Sin dígitos → debe devolver string.Empty, no lanzar excepción.'],
+        ['ready', 'residuo == 0', 'Caso borde del módulo 11 → DV = "0".'],
+        ['ready', 'residuo == 1', 'Caso especial explícito en el código (no hace 11-1) → DV = "1".'],
+        ['ready', 'residuo == 2', 'Rama general → DV = 11-2 = "9".'],
+        ['ready', 'NIT de más de 15 dígitos', 'El arreglo de pesos solo tiene 15 posiciones — el bucle debe truncar ahí sin lanzar excepción.'],
+      ],
+    },
+    {
+      id: 'iuva', title: 'CalculadoraBaseGravableVehiculo — IUVA (Ley 488/1998)', file: 'SGDS.Application/Helpers/CalculadoraBaseGravableVehiculo.cs',
+      cases: [
+        ['ready', 'ObtenerValorPorAnio — años intermedios', 'Ya existe un [Theory] parcial; añade casos para 2003, 2015, 2023 (spot-check de cada rama del switch).'],
+        ['ready', 'ObtenerValorPorAnio — saturación en los extremos', 'anioModelo=1990 y anioModelo=2026 deben devolver el mismo valor que 2001 y 2025 respectivamente (ya cubierto, pero es el caso más importante de "no falla, satura").'],
+        ['ready', 'Calcular — vehículo no encontrado (fila == null)', 'Soportado=false y MotivoNoSoportado con el texto de "verifica marca, línea y cilindraje..."'],
+        ['ready', 'Calcular — antiguo/clásico sin TarifaBaseClasicoAntiguo configurada', 'Soportado=false — el sistema debe negarse a inventar el valor (regla confirmada explícitamente en el código).'],
+        ['ready', 'Calcular — antiguo/clásico con tarifa configurada + blindado', 'ValorAjustado = TarifaBaseClasicoAntiguo * 1.10, AplicaBlindaje=true, AplicaClasicoAntiguo=true.'],
+        ['ready', 'Calcular — vehículo normal + blindado', 'ValorAjustado = ValorTabla * (1 + RecargoBlindaje) — probar con RecargoBlindaje distinto de 0.10 para confirmar que no está hardcodeado.'],
+        ['ready', 'Calcular — vehículo normal sin blindaje', 'ValorAjustado == ValorTabla, AplicaBlindaje=false.'],
+      ],
+    },
+    {
+      id: 'estampillas', title: 'CalculadoraEstampillas — 7 estampillas departamentales (Santander)', file: 'SGDS.Application/Helpers/CalculadoraEstampillas.cs',
+      cases: [
+        ['ready', 'Validar — cada campo obligatorio vacío/negativo', '6 asserts de Assert.Throws<ArgumentException>: ValorContratoBruto<0, TarifaIva fuera de [0,1], y los 4 strings vacíos (TipoEntidad, RegimenContratista, TipoContrato, FuenteRecursos, Municipio).'],
+        ['ready', 'Base gravable con IVA incluido vs sin IVA', 'IncluyeIva=true → baseGravable = bruto/(1+tarifa); IncluyeIva=false → baseGravable = bruto tal cual.'],
+        ['ready', 'Pro-Hospital — aplica y no aplica', 'Gobernación/Ente Descentralizado con tarifa 2%; Alcaldía Municipal → no aplica; combinación SGSSS_Asistencial + Salud_Asistencial → excluida por fallo judicial (motivo específico).'],
+        ['ready', 'Pro-UIS — mínimo exento de 3 SMMLV', 'baseGravable justo por debajo de 3×SMMLV → no aplica; justo en el umbral y por encima → aplica con tarifa 2.5% (declarante) o 3.5% (no declarante).'],
+        ['ready', 'Pro-UIS — distribución 75/15/10', 'La suma de Distribucion["UIS"]+["UTS"]+["Unipaz"] debe igualar el Valor total del ítem (redondeado).'],
+        ['ready', 'Pro-Electrificación Rural', 'Solo Gobernación/Ente Descentralizado, tarifa fija 2%; cualquier otro tipo de entidad → no aplica.'],
+        ['ready', 'Pro-Cultura — 3 ramas', 'Gobernación → 2% fijo; Alcaldía Municipal sin tarifa configurada en el municipio → 1% por defecto (GetValueOrDefault); Alcaldía con tarifa específica en TarifaCulturaPorMunicipio → usa esa tarifa; otro tipo de entidad → no aplica.'],
+        ['ready', 'Fondo de Reforestación', 'Solo Obra/Consultoría/Concesión de Gobernación/Ente Descentralizado — probar un tipo de contrato no incluido (ej. Suministro) → no aplica.'],
+        ['ready', 'Pro-Bienestar Adulto Mayor', 'Aplica a los 3 tipos de entidad válidos con tarifa fija 2%; tipo de entidad no reconocido → no aplica.'],
+        ['ready', 'Pro-Deporte y Recreación — 3 ramas', 'Gobernación → no aplica (tarifa 0%, Ley 2023/2020); Alcaldía sin tarifa en el municipio → 1.5% por defecto; Alcaldía con tarifa específica en TarifaDeportePorMunicipio → esa tarifa; cualquier otro tipo de entidad → no aplica.'],
+        ['ready', 'Redondeo — Peso vs Centena', 'Un mismo valor con ModoRedondeo=Peso vs Centena debe dar resultados distintos; probar un valor terminado en 50 para confirmar MidpointRounding.AwayFromZero.'],
+        ['ready', 'Total = suma solo de ítems con Aplica=true', 'Construye una Entrada donde varios ítems no apliquen y confirma que Total no los incluye aunque tengan Valor calculado internamente.'],
+        ['ready', '"Regla de oro" — sin recargo de sistematización', 'Prueba de regresión explícita: Total nunca debe ser mayor a la suma lineal de los ítems (ningún +10% adicional) — la ordenanza que lo permitía fue anulada judicialmente.'],
+      ],
+    },
+    {
+      id: 'impoconsumo', title: 'CalculadoraImpuestoConsumo — Licores / Cervezas / Cigarrillos', file: 'SGDS.Application/Helpers/CalculadoraImpuestoConsumo.cs',
+      cases: [
+        ['ready', 'Validar — campos obligatorios', 'UnidadesFisicas<0, GradosAlcoholimetricos<0, PvpCertificado<0, y los 3 strings vacíos (Categoria, DepartamentoDestino, TipoTramite) → cada uno debe lanzar ArgumentException.'],
+        ['setup', 'Licores — componente específico + ad valorem', 'Antes de fijar el valor esperado, lee CalcularLicores (no incluido en esta lectura) para confirmar la fórmula exacta sobre el envase estándar de 750cc.'],
+        ['setup', 'Cervezas — nacional vs importada', 'Importadas usan ValorAduana + GravamenesArancelarios en vez del PVP — confirmar la fórmula real en CalcularCervezas antes de escribir el Assert.'],
+        ['ready', 'Cigarrillos — Picadura ($354/g, tarifa fija conocida)', 'Es el único componente específico con tarifa ya definida en el código (los demás están "pendientes de configurar") — buen primer caso concreto para este bloque.'],
+        ['ready', 'Cigarrillos/Puros — tarifa específica sin parametrizar', 'Debe devolver Soportado=false (o el componente específico en 0 con motivo), nunca inventar un número — mismo principio que TarifaBaseClasicoAntiguo en IUVA.'],
+        ['ready', 'Vapeo — explícitamente sin parametrizar', 'SubVapeo debe devolver NoAplica/Soportado=false citando el Decreto 1474/2025 (inexequible) — es una exclusión deliberada, no un olvido.'],
+        ['setup', 'Excepción San Andrés y Providencia', 'DepartamentoDestino = San Andrés → AplicaExcepcionSanAndres=true; confirmar en el código qué componente se ve afectado antes de fijar el número esperado.'],
+        ['setup', 'EsSoloInformativo', 'Identificar en qué combinación de categoría/trámite el resultado es solo informativo (no se cobra) y probar ese caso explícitamente.'],
+      ],
+    },
+    {
+      id: 'geo', title: 'GeografiaColombia — distancias origen/destino', file: 'SGDS.Application/Helpers/GeografiaColombia.cs',
+      cases: [
+        ['ready', 'ObtenerCapital — departamento válido', 'Ej. "Santander" → Coordenada(7.1193, -73.1227) exacta.'],
+        ['ready', 'ObtenerCapital — departamento inexistente o null', 'Debe devolver null, no lanzar excepción.'],
+        ['ready', 'DistanciaAproximadaKm — mismo departamento', 'Origen == Destino → 0 km.'],
+        ['ready', 'DistanciaAproximadaKm — Bogotá D.C. vs Cundinamarca', 'Ambos apuntan a la misma coordenada en el diccionario → 0 km (caso particular a documentar, no es un bug).'],
+        ['ready', 'DistanciaAproximadaKm — departamento inexistente', 'Debe devolver null (no 0, no excepción) si origen o destino no están en el diccionario.'],
+        ['ready', 'DistanciaKmEntre — par de coordenadas de distancia conocida', 'Usa Assert.InRange (no igualdad exacta) con un margen de ~2% — la fórmula de Haversine es una aproximación esférica.'],
+      ],
+    },
+    {
+      id: 'comfenalco-back', title: 'Comfenalco — reglas de negocio (backend)', file: 'SGDS.Application/Helpers/ReglasComfenalco.cs',
+      cases: [
+        ['ready', 'CalcularCategoriaCarne — límites A/B/C', 'ingresos = 2×SMMLV exacto → "A"; 2×SMMLV + 1 → "B"; 4×SMMLV exacto → "B"; 4×SMMLV + 1 → "C" — los límites son los que más se rompen al tocar la fórmula.'],
+        ['ready', 'RN-CV-001 — Carné virtual con estado no Activo', 'estadoAfiliacion="Inactivo" o "Suspendido" en Validar() debe devolver el mensaje de bloqueo, no null.'],
+        ['ready', 'RN-SV-001 — techo de 4 SMMLV en Subsidio de vivienda', 'ingresosGrupoFamiliar > 4×SMMLV → bloqueado; exactamente 4×SMMLV → permitido (el operador es ">", no ">=").'],
+        ['ready', 'RN-SV-002 — declaración de no propietario', 'declaracionNoPropietario="No" → bloqueado; "Sí" o campo ausente → permitido.'],
+        ['ready', 'RN-SD-001 — mínimo de meses según tipo de trabajador', 'Dependiente con 11 meses → bloqueado, con 12 → permitido; Independiente con 23 → bloqueado, con 24 → permitido.'],
+        ['ready', 'RN-SD-002 — última Caja distinta de Comfenalco', 'ultimaCajaAfiliacion="Otra caja" → bloqueado con el mensaje de redirección.'],
+        ['ready', 'RN-SD-003 — beneficio reciente (ventana de 3 años)', 'fechaUltimoBeneficioCesante justo dentro de los 3 años → bloqueado; justo fuera (3 años y 1 día) → permitido.'],
+        ['ready', 'RN-CRE-001 — cuota vs 50% del salario neto', 'cuotaMensualSolicitada = 50% exacto del salario → permitido (el operador es ">", no ">="); 50%+1 → bloqueado.'],
+        ['ready', 'RN-CRE-003 — libranza sin aportes al día o sin convenio', 'modalidadCredito="Libranza" + aportesAlDiaComfenalco="No" (o convenioLibranzaActivo="No") → bloqueado; modalidadCredito="Ordinario" con los mismos "No" → permitido (la regla es solo para libranza).'],
+        ['ready', 'Validar — tipo sin reglas configuradas', 'Debe devolver null (sin bloquear) para cualquier tipo que no esté en el switch (ej. "Protección al cesante") — no debe afectar otros proyectos ni tipos.'],
+      ],
+    },
+    {
+      id: 'comfenalco-front', title: 'Comfenalco — cálculos puros (frontend)', file: 'SGDS.Frontend/src/config/comfenalcoConfig.ts',
+      cases: [
+        ['setup', 'calcularCategoriaCarne — mismos límites que el backend', 'Debe dar exactamente el mismo resultado que CalcularCategoriaCarne en C# para los mismos valores — hay dos implementaciones del mismo cálculo, backend y frontend, con riesgo real de que diverjan sin que nada te avise.'],
+        ['setup', 'calcularCuotaCredito — caso de referencia', 'monto=10.000.000, plazo=12, tasaEA=0.20 → calcula la cuota a mano con la fórmula francesa y compárala contra el resultado de la función.'],
+        ['setup', 'calcularCuotaCredito — tasaEA = 0', 'Debe usar la rama simple (monto/plazoMeses), no dividir por cero en la fórmula general.'],
+        ['setup', 'calcularCuotaCredito — plazoMeses = 0', 'Revisar si hoy protege este caso (división por cero) o si depende de que el formulario nunca lo permita — vale la pena una prueba que documente el comportamiento actual.'],
+        ['setup', 'aniosAportes — con fecha fija', 'Pasando un `hoy` fijo (ej. 15 sep. 2026), debe devolver exactamente [2026, 2025, 2024, 2023].'],
+      ],
+    },
+    {
+      id: 'controllers', title: 'Controllers — pruebas de integración (requieren InMemory DB)', file: 'SGDS.Api/Controllers/SolicitudesController.cs y otros',
+      cases: [
+        ['setup', 'Auto-asignación al crear solicitud', 'Un operador no-admin que crea una Solicitud debe quedar como UsuarioAsignadoId — sin necesidad de "Tomar caso".'],
+        ['setup', 'Listado restringido a "lo mío"', 'Un operador no-admin en GET /Solicitudes/listado solo debe ver solicitudes con su propio UsuarioAsignadoId; Admin SYC y Gerencial ven todas.'],
+        ['setup', 'AsignarUsuario rechaza usuario fuera del proyecto', 'PUT /{id}/asignar-usuario con un UsuarioId sin UsuarioProyecto en el proyecto de la solicitud → 400.'],
+        ['setup', 'Cadena GoTrace → Infoconsumo → SycTrace conserva el mismo Id', 'Al vincular LoteGoTraceSolicitudId/SolicitudInfoconsumoId, la Solicitud original cambia de ProyectoId/Estado pero NO se crea una fila nueva — es la regla central de esta sesión, la más valiosa para cubrir con un test de integración.'],
+        ['setup', 'GET /carne-virtual bloquea si no está Activo', 'Aunque haya pasado la validación al crear, si el estado guardado ya no es "Activo" al consultar, debe devolver 400.'],
+      ],
+    },
+    {
+      id: 'e2e', title: 'End-to-end (Playwright, ya scaffolded en tests/example.spec.ts)', file: 'tests/*.spec.ts',
+      cases: [
+        ['setup', 'Carné virtual — flujo completo', 'Login operador Comfenalco → nueva solicitud → completar formulario (estado Activo + ingresos + grupo familiar) → radicar → ver previsualización con código de barras real.'],
+        ['setup', 'Subsidio de desempleo — selector de periodos', 'Agregar un periodo Desde/Hasta → confirmar que el contador de meses sube y el botón de radicar se habilita al llegar al mínimo.'],
+        ['setup', 'Simulador de crédito — "Usar esta cuota"', 'Ingresar monto/plazo/tasa → click en "Usar esta cuota" → confirmar que el campo Cuota mensual solicitada se actualiza con el valor calculado.'],
+        ['setup', 'Trazabilidad GoTrace → Infoconsumo → SycTrace en la UI', 'Verificar en pantalla que el número de solicitud (prefijo del proyecto) cambia en cada etapa pero el Id interno / historial de estados es continuo.'],
+      ],
+    },
+  ];
+
+  var STORAGE_KEY = 'sgds-plan-pruebas-v1';
+  var checked = {};
+  try { checked = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { checked = {}; }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); } catch (e) {}
+    updateProgress();
+  }
+
+  function updateProgress() {
+    var total = 0, done = 0;
+    DATA.forEach(function (m) {
+      m.cases.forEach(function (c, i) {
+        total++;
+        if (checked[m.id + '-' + i]) done++;
+      });
+    });
+    document.getElementById('progress-label').textContent = done + ' / ' + total + ' casos';
+    document.getElementById('progress-fill').style.width = (total ? (done / total * 100) : 0) + '%';
+  }
+
+  var tagLabel = { ready: 'Listo', setup: 'Requiere setup', refactor: 'Requiere refactor' };
+
+  var root = document.getElementById('modules');
+  DATA.forEach(function (m) {
+    var section = document.createElement('section');
+    section.className = 'module';
+
+    var head = document.createElement('div');
+    head.className = 'head';
+    head.innerHTML =
+      '<div class="titles"><h2>' + m.title + '</h2><p class="desc"><code>' + m.file + '</code></p></div>' +
+      '<span class="count">' + m.cases.length + ' casos</span>' +
+      '<svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>';
+    head.addEventListener('click', function () { section.classList.toggle('collapsed'); });
+    section.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'body';
+    var ul = document.createElement('ul');
+    ul.className = 'cases';
+
+    m.cases.forEach(function (c, i) {
+      var tag = c[0], titleText = c[1], why = c[2];
+      var id = m.id + '-' + i;
+      var li = document.createElement('li');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = id;
+      cb.checked = !!checked[id];
+      cb.addEventListener('change', function () { checked[id] = cb.checked; save(); });
+
+      var label = document.createElement('label');
+      label.setAttribute('for', id);
+      var span = document.createElement('span');
+      span.className = 'case-title';
+      span.textContent = titleText;
+      var small = document.createElement('span');
+      small.className = 'case-why';
+      small.textContent = why;
+      label.appendChild(span);
+      label.appendChild(small);
+
+      var tagEl = document.createElement('span');
+      tagEl.className = 'tag ' + tag;
+      tagEl.textContent = tagLabel[tag];
+
+      li.appendChild(cb);
+      li.appendChild(label);
+      li.appendChild(tagEl);
+      ul.appendChild(li);
+    });
+
+    body.appendChild(ul);
+    section.appendChild(body);
+    root.appendChild(section);
+  });
+
+  updateProgress();
+})();
+</script>

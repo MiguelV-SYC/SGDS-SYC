@@ -1,0 +1,805 @@
+<title>Código de Pruebas SGDS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f7f9fc;
+    --surface: #ffffff;
+    --border: #e4e9f2;
+    --ink-900: #0f1a2e;
+    --ink-600: #5b6b85;
+    --ink-400: #94a3b8;
+    --navy-950: #0a1730;
+    --blue-600: #2f6fed;
+    --blue-50: #eef3ff;
+    --green-600: #047857;
+    --green-50: #d1fae5;
+    --amber-600: #b45309;
+    --amber-50: #fef3c7;
+    --slate-600: #475569;
+    --slate-50: #f1f5f9;
+    --font-display: 'Source Serif 4', Georgia, serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a1019; --surface: #101a2c; --border: #223049;
+      --ink-900: #eef2f9; --ink-600: #a9b6cc; --ink-400: #6b7a96;
+      --blue-50: #16233d; --green-50: #0d2b22; --amber-50: #2b210c; --slate-50: #1a2333;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a1019; --surface: #101a2c; --border: #223049;
+    --ink-900: #eef2f9; --ink-600: #a9b6cc; --ink-400: #6b7a96;
+    --blue-50: #16233d; --green-50: #0d2b22; --amber-50: #2b210c; --slate-50: #1a2333;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink-900); font-family: var(--font-body); font-size: 14px; line-height: 1.55; padding-bottom: 60px; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 16px; }
+
+  header.hero { background: linear-gradient(120deg, var(--navy-950), #122a58 65%, var(--blue-600)); color: white; padding: 40px 0 30px; }
+  header.hero .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #9fc0ff; margin: 0 0 10px; }
+  header.hero h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 34px); margin: 0 0 10px; text-wrap: balance; }
+  header.hero p.sub { max-width: 66ch; color: #cdd9f2; margin: 0; font-size: 14.5px; }
+
+  nav.toc { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 14px 18px; margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+  nav.toc a { font-family: var(--font-mono); font-size: 11.5px; color: #eaf0ff; text-decoration: none; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 99px; }
+  nav.toc a:hover { background: rgba(255,255,255,0.2); }
+
+  main { padding-top: 30px; }
+
+  .note { background: var(--amber-50); border: 1px solid #f2d49a; color: var(--amber-600); border-radius: 10px; padding: 12px 16px; font-size: 12.5px; margin-bottom: 26px; }
+  .note b { color: inherit; }
+
+  section.module { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 22px; padding: 22px 24px; scroll-margin-top: 16px; }
+  section.module .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  section.module h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; margin: 0; }
+  section.module .filename { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-600); background: var(--slate-50); padding: 4px 10px; border-radius: 7px; white-space: nowrap; margin-top: 2px; }
+  section.module .desc { color: var(--ink-600); font-size: 13px; margin: 6px 0 14px; }
+  section.module .desc code { font-family: var(--font-mono); background: var(--slate-50); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+
+  .status { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; padding: 3px 9px; border-radius: 99px; margin-bottom: 12px; }
+  .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status.ready { background: var(--green-50); color: var(--green-600); }
+  .status.setup { background: var(--amber-50); color: var(--amber-600); }
+
+  pre.code { font-family: var(--font-mono); font-size: 12px; line-height: 1.6; background: var(--navy-950); color: #d7e3fb; border-radius: 10px; padding: 16px 18px; overflow-x: auto; margin: 0; }
+  pre.code .cm { color: #7f97c7; font-style: italic; }
+  pre.code .kw { color: #7ab8ff; }
+  pre.code .str { color: #a8e6a3; }
+  pre.code .type { color: #f2c98a; }
+
+  footer { max-width: 920px; margin: 20px auto 0; padding: 0 16px; color: var(--ink-400); font-size: 12px; }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">SGDS · xUnit — código listo para pegar</p>
+    <h1>Código de las pruebas</h1>
+    <p class="sub">Una clase de prueba por Helper, con los valores esperados calculados a mano contra la fórmula real de cada método — no inventados. Copia cada bloque al archivo indicado dentro de <code style="background:rgba(255,255,255,0.12);color:#eaf0ff">tests/SGDS.Application.Tests/</code>.</p>
+    <nav class="toc">
+      <a href="#dv">CalculadoraDv</a>
+      <a href="#iuva">BaseGravableVehiculo</a>
+      <a href="#estampillas">Estampillas</a>
+      <a href="#impoconsumo">ImpuestoConsumo</a>
+      <a href="#geo">GeografiaColombia</a>
+      <a href="#comfenalco">Comfenalco</a>
+      <a href="#frontend">Frontend (Vitest)</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="note">
+La sección Comfenalco ya no necesita reflexión ni tocar <code>SolicitudesController</code> — esa lógica se movió a un Helper público en <code>SGDS.Application</code> (ver sección más abajo). La sección Frontend sí necesita un paso de instalación que no se ejecutó (<code>npm install -D vitest</code>) — está marcada con 🟡.
+  </div>
+
+  <section class="module" id="dv">
+    <div class="head"><h2>CalculadoraDv</h2><span class="filename">CalculadoraDvTests.cs</span></div>
+    <span class="status ready">Listo — corre ya con dotnet test</span>
+    <p class="desc">NITs de un solo dígito dan control total sobre el residuo del módulo 11: <code>0→dv 0</code>, <code>4→dv 1</code> (el caso especial que NO hace <code>11-residuo</code>), <code>8→dv 9</code>.</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> CalculadoraDvTests
+{
+    [Theory]
+    [InlineData(<span class="str">"900123456"</span>, <span class="str">"8"</span>)]      <span class="cm">// vector de referencia, 9 dígitos reales</span>
+    [InlineData(<span class="str">"900.123.456"</span>, <span class="str">"8"</span>)]    <span class="cm">// puntuación no debe cambiar el resultado</span>
+    [InlineData(<span class="str">"0"</span>, <span class="str">"0"</span>)]              <span class="cm">// residuo == 0</span>
+    [InlineData(<span class="str">"4"</span>, <span class="str">"1"</span>)]              <span class="cm">// residuo == 1 (caso especial: NO es 11-1)</span>
+    [InlineData(<span class="str">"8"</span>, <span class="str">"9"</span>)]              <span class="cm">// residuo == 2 -> 11-2</span>
+    [InlineData(<span class="str">"9000000000000000"</span>, <span class="str">"0"</span>)] <span class="cm">// 16 dígitos: el "9" inicial cae fuera de los 15 pesos y se ignora</span>
+    <span class="kw">public void</span> Calcular_DevuelveDigitoCorrecto(<span class="type">string</span> nit, <span class="type">string</span> esperado)
+    {
+        <span class="type">var</span> resultado = CalculadoraDv.Calcular(nit);
+        Assert.Equal(esperado, resultado);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_SinDigitos_DevuelveVacio()
+    {
+        Assert.Equal(<span class="str">""</span>, CalculadoraDv.Calcular(<span class="str">"ABC-sin-numeros"</span>));
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="iuva">
+    <div class="head"><h2>CalculadoraBaseGravableVehiculo</h2><span class="filename">CalculadoraBaseGravableVehiculoTests.cs</span></div>
+    <span class="status ready">Listo — corre ya con dotnet test</span>
+    <p class="desc">Incluye el caso que tu prueba actual (<code>ObtenerValorPorAnio</code>) no cubre: una fila real siempre tiene columnas de años sin diligenciar (<code>decimal?</code> en null), y <code>Calcular</code> debe reportarlo como no soportado, no lanzar una excepción ni devolver 0.</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+<span class="kw">using</span> SGDS.Domain.Entities;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> CalculadoraBaseGravableVehiculoTests
+{
+    <span class="kw">private static readonly</span> BaseGravableVehiculo Fila = <span class="kw">new</span>()
+    {
+        Valor2001OAnterior = 10000,
+        Valor2002 = 11000,
+        Valor2010 = 19000,
+        <span class="cm">// Valor2015 queda sin diligenciar a propósito -> null</span>
+        Valor2024 = 33000,
+        Valor2025 = 34000,
+    };
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_ColumnaDelAnioSinDiligenciar_NoSoportado()
+    {
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(
+            Fila, anioModelo: 2015, blindado: <span class="kw">false</span>, esClasicoAntiguo: <span class="kw">false</span>, <span class="kw">new</span> ConfiguracionBaseGravableVehiculo());
+
+        Assert.False(resultado.Soportado);
+        Assert.Contains(<span class="str">"no tiene un valor de base gravable"</span>, resultado.MotivoNoSoportado);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_VehiculoNoEncontrado_NoSoportado()
+    {
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(
+            <span class="kw">fila:</span> <span class="kw">null</span>, anioModelo: 2020, blindado: <span class="kw">false</span>, esClasicoAntiguo: <span class="kw">false</span>, <span class="kw">new</span> ConfiguracionBaseGravableVehiculo());
+
+        Assert.False(resultado.Soportado);
+        Assert.Contains(<span class="str">"No se encontró el vehículo"</span>, resultado.MotivoNoSoportado);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_ClasicoAntiguo_SinTarifaConfigurada_NoSoportado()
+    {
+        <span class="cm">// TarifaBaseClasicoAntiguo queda null a propósito -> el sistema no debe inventarla</span>
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(
+            Fila, anioModelo: 1985, blindado: <span class="kw">false</span>, esClasicoAntiguo: <span class="kw">true</span>, <span class="kw">new</span> ConfiguracionBaseGravableVehiculo());
+
+        Assert.False(resultado.Soportado);
+        Assert.True(resultado.AplicaClasicoAntiguo);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_ClasicoAntiguo_ConTarifaYBlindaje_AplicaAmbos()
+    {
+        <span class="type">var</span> config = <span class="kw">new</span> ConfiguracionBaseGravableVehiculo { TarifaBaseClasicoAntiguo = 20000, RecargoBlindaje = 0.10m };
+
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(Fila, 1985, blindado: <span class="kw">true</span>, esClasicoAntiguo: <span class="kw">true</span>, config);
+
+        Assert.True(resultado.Soportado);
+        Assert.Equal(20000, resultado.ValorTabla);
+        Assert.Equal(22000, resultado.ValorAjustado); <span class="cm">// 20000 * 1.10</span>
+        Assert.True(resultado.AplicaBlindaje);
+        Assert.True(resultado.AplicaClasicoAntiguo);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_VehiculoNormal_ConBlindaje_UsaRecargoDeConfig()
+    {
+        <span class="cm">// RecargoBlindaje distinto del valor por defecto (0.10) -> confirma que no está hardcodeado</span>
+        <span class="type">var</span> config = <span class="kw">new</span> ConfiguracionBaseGravableVehiculo { RecargoBlindaje = 0.15m };
+
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(Fila, 2010, blindado: <span class="kw">true</span>, esClasicoAntiguo: <span class="kw">false</span>, config);
+
+        Assert.True(resultado.Soportado);
+        Assert.Equal(19000, resultado.ValorTabla);
+        Assert.Equal(21850, resultado.ValorAjustado); <span class="cm">// 19000 * 1.15</span>
+        Assert.False(resultado.AplicaClasicoAntiguo);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Calcular_VehiculoNormal_SinBlindaje_ValorAjustadoIgualAlDeTabla()
+    {
+        <span class="type">var</span> resultado = CalculadoraBaseGravableVehiculo.Calcular(
+            Fila, anioModelo: 2024, blindado: <span class="kw">false</span>, esClasicoAntiguo: <span class="kw">false</span>, <span class="kw">new</span> ConfiguracionBaseGravableVehiculo());
+
+        Assert.Equal(resultado.ValorTabla, resultado.ValorAjustado);
+        Assert.False(resultado.AplicaBlindaje);
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="estampillas">
+    <div class="head"><h2>CalculadoraEstampillas</h2><span class="filename">CalculadoraEstampillasTests.cs</span></div>
+    <span class="status ready">Listo — corre ya con dotnet test</span>
+    <p class="desc">Cada valor esperado sale de aplicar la tarifa real del código a mano. El último test es la "regla de oro" del archivo (prohibido el recargo del 10% de sistematización) hecho prueba de regresión.</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> CalculadoraEstampillasTests
+{
+    <span class="kw">private static</span> CalculadoraEstampillas.Entrada Entrada(
+        <span class="type">decimal</span> valorContratoBruto, <span class="type">string</span> tipoEntidad, <span class="type">string</span> tipoContrato,
+        <span class="type">string</span> regimen = CalculadoraEstampillas.RegimenDeclaranteRenta,
+        <span class="type">string</span> fuente = CalculadoraEstampillas.FuenteRecursosPropios,
+        <span class="type">string</span> municipio = <span class="str">"Bucaramanga"</span>) =>
+        <span class="kw">new</span>(valorContratoBruto, IncluyeIva: <span class="kw">false</span>, TarifaIva: 0, tipoEntidad, regimen, tipoContrato, fuente, municipio);
+
+    [Fact]
+    <span class="kw">public void</span> Validar_ValorNegativo_Lanza() =>
+        Assert.Throws&lt;ArgumentException&gt;(() =&gt; CalculadoraEstampillas.Validar(Entrada(-1, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra)));
+
+    [Theory]
+    [InlineData(<span class="str">""</span>, CalculadoraEstampillas.TipoContratoObra)]
+    [InlineData(CalculadoraEstampillas.TipoEntidadGobernacion, <span class="str">""</span>)]
+    <span class="kw">public void</span> Validar_CamposObligatoriosVacios_Lanza(<span class="type">string</span> tipoEntidad, <span class="type">string</span> tipoContrato) =&gt;
+        Assert.Throws&lt;ArgumentException&gt;(() =&gt; CalculadoraEstampillas.Validar(Entrada(1000, tipoEntidad, tipoContrato)));
+
+    [Fact]
+    <span class="kw">public void</span> BaseGravable_ConIvaIncluido_LoDescuenta()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraEstampillas.Entrada(
+            119_000_000, IncluyeIva: <span class="kw">true</span>, TarifaIva: 0.19m,
+            CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.RegimenDeclaranteRenta,
+            CalculadoraEstampillas.TipoContratoObra, CalculadoraEstampillas.FuenteRecursosPropios, <span class="str">"Bucaramanga"</span>);
+
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(entrada, <span class="kw">new</span> ConfiguracionEstampillas());
+
+        Assert.Equal(100_000_000m, resultado.BaseGravable); <span class="cm">// 119.000.000 / 1.19</span>
+    }
+
+    [Fact]
+    <span class="kw">public void</span> ProHospital_GobernacionRecursosPropios_Aplica2Porciento()
+    {
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra),
+            <span class="kw">new</span> ConfiguracionEstampillas());
+
+        <span class="type">var</span> item = resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Hospital"</span>);
+        Assert.True(item.Aplica);
+        Assert.Equal(2_000_000m, item.Valor);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> ProHospital_ExcluidoPorFalloConsejoDeEstado()
+    {
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoSaludAsistencial,
+                fuente: CalculadoraEstampillas.FuenteSgsssAsistencial),
+            <span class="kw">new</span> ConfiguracionEstampillas());
+
+        <span class="type">var</span> item = resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Hospital"</span>);
+        Assert.False(item.Aplica);
+        Assert.Contains(<span class="str">"Consejo de Estado"</span>, item.Motivo);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> ProUis_DebajoDelMinimoExento_NoAplica()
+    {
+        <span class="cm">// 3 SMMLV con el default (1.300.000) = 3.900.000 — este contrato queda por debajo</span>
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(3_000_000, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra),
+            <span class="kw">new</span> ConfiguracionEstampillas());
+
+        <span class="type">var</span> item = resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-UIS"</span>);
+        Assert.False(item.Aplica);
+        Assert.Contains(<span class="str">"mínimo exento"</span>, item.Motivo);
+    }
+
+    [Theory]
+    [InlineData(CalculadoraEstampillas.RegimenDeclaranteRenta, 2_500_000)]
+    [InlineData(CalculadoraEstampillas.RegimenNoDeclaranteRenta, 3_500_000)]
+    <span class="kw">public void</span> ProUis_TarifaSegunRegimen_YDistribucionSumaElTotal(<span class="type">string</span> regimen, <span class="type">decimal</span> valorEsperado)
+    {
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra, regimen: regimen),
+            <span class="kw">new</span> ConfiguracionEstampillas());
+
+        <span class="type">var</span> item = resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-UIS"</span>);
+        Assert.Equal(valorEsperado, item.Valor);
+        Assert.Equal(item.Valor, item.Distribucion![<span class="str">"UIS"</span>] + item.Distribucion[<span class="str">"UTS"</span>] + item.Distribucion[<span class="str">"Unipaz"</span>]);
+    }
+
+    [Theory]
+    [InlineData(CalculadoraEstampillas.TipoEntidadGobernacion, <span class="kw">null</span>, 0.02)]
+    [InlineData(CalculadoraEstampillas.TipoEntidadAlcaldiaMunicipal, <span class="kw">null</span>, 0.01)]     <span class="cm">// municipio sin tarifa configurada -> 1% por defecto</span>
+    <span class="kw">public void</span> ProCultura_TarifaSegunEntidad(<span class="type">string</span> tipoEntidad, <span class="type">string?</span> _, <span class="type">decimal</span> tarifaEsperada)
+    {
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, tipoEntidad, CalculadoraEstampillas.TipoContratoObra), <span class="kw">new</span> ConfiguracionEstampillas());
+
+        <span class="type">var</span> item = resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Cultura"</span>);
+        Assert.Equal(tarifaEsperada, item.Tarifa);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> ProCultura_MunicipioConTarifaPropia_LaUsaEnLugarDelDefault()
+    {
+        <span class="type">var</span> config = <span class="kw">new</span> ConfiguracionEstampillas { TarifaCulturaPorMunicipio = { [<span class="str">"Barrancabermeja"</span>] = 0.015m } };
+
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, CalculadoraEstampillas.TipoEntidadAlcaldiaMunicipal, CalculadoraEstampillas.TipoContratoObra, municipio: <span class="str">"Barrancabermeja"</span>),
+            config);
+
+        Assert.Equal(0.015m, resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Cultura"</span>).Tarifa);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> ProDeporte_Gobernacion_NoAplicaPorLey2023de2020()
+    {
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(100_000_000, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra), <span class="kw">new</span> ConfiguracionEstampillas());
+
+        Assert.False(resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Deporte y Recreación"</span>).Aplica);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Redondeo_Peso_RedondeaAlPesoMasCercano_AwayFromZero()
+    {
+        <span class="cm">// 4.975 * 2% = 99.5 exacto -> away-from-zero redondea a 100, no a 99</span>
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(4_975, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra), <span class="kw">new</span> ConfiguracionEstampillas());
+
+        Assert.Equal(100m, resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Hospital"</span>).Valor);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Redondeo_Centena_RedondeaAlCentenarMasCercano()
+    {
+        <span class="cm">// 61.727.500 * 2% = 1.234.550 -> /100 = 12.345,5 -> away-from-zero = 12.346 -> *100 = 1.234.600</span>
+        <span class="type">var</span> config = <span class="kw">new</span> ConfiguracionEstampillas { ModoRedondeo = ModoRedondeoEstampillas.Centena };
+
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(61_727_500, CalculadoraEstampillas.TipoEntidadGobernacion, CalculadoraEstampillas.TipoContratoObra), config);
+
+        Assert.Equal(1_234_600m, resultado.Items.Single(i =&gt; i.Nombre == <span class="str">"Pro-Hospital"</span>).Valor);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Total_SumaSoloLosItemsQueAplican_SinRecargoDeSistematizacion()
+    {
+        <span class="cm">// Alcaldía Municipal: solo aplican Pro-Cultura, Pro-Adulto Mayor y Pro-Deporte de los 7 ítems</span>
+        <span class="type">var</span> resultado = CalculadoraEstampillas.Calcular(
+            Entrada(50_000_000, CalculadoraEstampillas.TipoEntidadAlcaldiaMunicipal, CalculadoraEstampillas.TipoContratoPrestacionServicios,
+                fuente: CalculadoraEstampillas.FuenteOtros, municipio: <span class="str">"Piedecuesta"</span>),
+            <span class="kw">new</span> ConfiguracionEstampillas());
+
+        Assert.Equal(3, resultado.Items.Count(i =&gt; i.Aplica));
+        Assert.Equal(2_250_000m, resultado.Total); <span class="cm">// 500.000 (cultura) + 1.000.000 (adulto mayor) + 750.000 (deporte)</span>
+
+        <span class="cm">// REGLA DE ORO — regresión: el total nunca es mayor a la suma lineal (nada de +10% de "sistematización")</span>
+        Assert.Equal(resultado.Items.Where(i =&gt; i.Aplica).Sum(i =&gt; i.Valor), resultado.Total);
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="impoconsumo">
+    <div class="head"><h2>CalculadoraImpuestoConsumo</h2><span class="filename">CalculadoraImpuestoConsumoTests.cs</span></div>
+    <span class="status ready">Listo — corre ya con dotnet test</span>
+    <p class="desc">Cubre las 3 categorías (Licores/Vinos, Cervezas, Cigarrillos), la excepción de San Andrés, Vapeo (deliberadamente sin tarifa) y la excepción de trámites en tránsito (solo informativo, <code>TotalAPagar = 0</code>).</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> CalculadoraImpuestoConsumoTests
+{
+    [Fact]
+    <span class="kw">public void</span> Validar_UnidadesNegativas_Lanza()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaLicores, CalculadoraImpuestoConsumo.SubLicoresDestiladosNacionales,
+            UnidadesFisicas: -1, GradosAlcoholimetricos: 40, PvpCertificado: 1000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        Assert.Throws&lt;ArgumentException&gt;(() =&gt; CalculadoraImpuestoConsumo.Validar(entrada));
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Licores_DestiladosNacionales_CalculaEspecificoYAdValorem()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaLicores, CalculadoraImpuestoConsumo.SubLicoresDestiladosNacionales,
+            UnidadesFisicas: 10, GradosAlcoholimetricos: 40, PvpCertificado: 50_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.Equal(144_000m, r.ComponenteEspecifico);  <span class="cm">// 40 grados * $360 * (7.500cc / 750cc)</span>
+        Assert.Equal(125_000m, r.ComponenteAdValorem);   <span class="cm">// 10 * 50.000 * 25%</span>
+        Assert.Equal(269_000m, r.TotalAPagar);
+        Assert.False(r.AplicaExcepcionSanAndres);
+        Assert.False(r.EsSoloInformativo);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Licores_SanAndres_UsaTarifaEspecialDe57()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaLicores, CalculadoraImpuestoConsumo.SubLicoresDestiladosNacionales,
+            UnidadesFisicas: 10, GradosAlcoholimetricos: 40, PvpCertificado: 50_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: CalculadoraImpuestoConsumo.DepartamentoSanAndres, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.True(r.AplicaExcepcionSanAndres);
+        Assert.Equal(22_800m, r.ComponenteEspecifico); <span class="cm">// 40 * $57 * 10 (el ad valorem no cambia)</span>
+        Assert.Equal(147_800m, r.TotalAPagar);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Vinos_UsaTarifaYAdValoremDeVinos()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaLicores, CalculadoraImpuestoConsumo.SubVinos,
+            UnidadesFisicas: 10, GradosAlcoholimetricos: 12, PvpCertificado: 30_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.Equal(29_160m, r.ComponenteEspecifico); <span class="cm">// 12 * $243 * 10</span>
+        Assert.Equal(60_000m, r.ComponenteAdValorem);  <span class="cm">// 10 * 30.000 * 20%</span>
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Cervezas_Nacionales_PorcentualSobrePvp()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCervezas, CalculadoraImpuestoConsumo.SubCervezasNacionales,
+            UnidadesFisicas: 100, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 2_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.Equal(96_000m, r.TotalAPagar); <span class="cm">// 100 * 2.000 * 48%</span>
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Cervezas_Importadas_SinValorAduana_NoSoportado()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCervezas, CalculadoraImpuestoConsumo.SubCervezasImportadas,
+            UnidadesFisicas: 100, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 2_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.False(r.Soportado);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Cervezas_Importadas_BaseIncluyeMargenDel30Porciento()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCervezas, CalculadoraImpuestoConsumo.SubCervezasImportadas,
+            UnidadesFisicas: 100, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 0,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: 1_000_000, GravamenesArancelarios: 200_000,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        <span class="cm">// (1.000.000 + 200.000) * 1.30 * 48% = 748.800</span>
+        Assert.Equal(748_800m, r.TotalAPagar);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Cigarrillos_SinTarifaConfigurada_NoSoportado_NoInventaValor()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCigarrillos, CalculadoraImpuestoConsumo.SubCigarrillosNacionales,
+            UnidadesFisicas: 100, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 8_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.False(r.Soportado); <span class="cm">// prohibido usar los valores del Decreto 1474/2025 (inexequible)</span>
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Cigarrillos_ConTarifaConfigurada_CalculaEspecificoYAdValorem()
+    {
+        <span class="type">var</span> config = <span class="kw">new</span> ConfiguracionImpuestoConsumo { TarifaEspecificaCigarrillos = 5_000 };
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCigarrillos, CalculadoraImpuestoConsumo.SubCigarrillosNacionales,
+            UnidadesFisicas: 100, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 8_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, config);
+
+        Assert.Equal(500_000m, r.ComponenteEspecifico); <span class="cm">// 5.000 * 100 cajetillas</span>
+        Assert.Equal(80_000m, r.ComponenteAdValorem);   <span class="cm">// 100 * 8.000 * 10%</span>
+        Assert.Equal(580_000m, r.TotalAPagar);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Picadura_UsaTarifaPorGramo()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCigarrillos, CalculadoraImpuestoConsumo.SubPicadura,
+            UnidadesFisicas: 0, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 20,
+            PesoGramos: 500, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.Equal(177_000m, r.ComponenteEspecifico); <span class="cm">// 500g * $354/g (tarifa certificada 2026)</span>
+        Assert.Equal(178_000m, r.TotalAPagar);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Picadura_SinPeso_NoSoportado()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCigarrillos, CalculadoraImpuestoConsumo.SubPicadura,
+            UnidadesFisicas: 0, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 20,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        Assert.False(CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo()).Soportado);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Vapeo_SiempreNoSoportado_PorSentenciaC079de2026()
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaCigarrillos, CalculadoraImpuestoConsumo.SubVapeo,
+            UnidadesFisicas: 10, GradosAlcoholimetricos: <span class="kw">null</span>, PvpCertificado: 30_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: <span class="str">"Movilización"</span>);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.False(r.Soportado);
+        Assert.Contains(<span class="str">"C-079"</span>, r.MotivoNoSoportado);
+    }
+
+    [Theory]
+    [InlineData(<span class="str">"Tránsito"</span>)]
+    [InlineData(<span class="str">"Tránsito local"</span>)]
+    [InlineData(<span class="str">"Tránsito declarado"</span>)]
+    <span class="kw">public void</span> TramitesDeTransito_SonSoloInformativos_TotalAPagarEsCero(<span class="type">string</span> tipoTramite)
+    {
+        <span class="type">var</span> entrada = <span class="kw">new</span> CalculadoraImpuestoConsumo.Entrada(
+            CalculadoraImpuestoConsumo.CategoriaLicores, CalculadoraImpuestoConsumo.SubLicoresDestiladosNacionales,
+            UnidadesFisicas: 10, GradosAlcoholimetricos: 40, PvpCertificado: 50_000,
+            PesoGramos: <span class="kw">null</span>, ValorAduana: <span class="kw">null</span>, GravamenesArancelarios: <span class="kw">null</span>,
+            DepartamentoDestino: <span class="str">"Santander"</span>, TipoTramite: tipoTramite);
+
+        <span class="type">var</span> r = CalculadoraImpuestoConsumo.Calcular(entrada, <span class="kw">new</span> ConfiguracionImpuestoConsumo());
+
+        Assert.True(r.EsSoloInformativo);
+        Assert.Equal(0m, r.TotalAPagar);
+        Assert.Equal(269_000m, r.ImpuestoInformativo); <span class="cm">// el valor informativo se conserva, solo el cobro se anula</span>
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="geo">
+    <div class="head"><h2>GeografiaColombia</h2><span class="filename">GeografiaColombiaTests.cs</span></div>
+    <span class="status ready">Listo — corre ya con dotnet test</span>
+    <p class="desc">La distancia usa la fórmula de Haversine (línea recta entre capitales), así que se compara con <code>Assert.InRange</code> y un margen — no con igualdad exacta.</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> GeografiaColombiaTests
+{
+    [Fact]
+    <span class="kw">public void</span> ObtenerCapital_DepartamentoValido_DevuelveCoordenada()
+    {
+        <span class="type">var</span> capital = GeografiaColombia.ObtenerCapital(<span class="str">"Santander"</span>);
+
+        Assert.NotNull(capital);
+        Assert.Equal(7.1193, capital!.Lat, precision: 3);
+        Assert.Equal(-73.1227, capital.Lng, precision: 3);
+    }
+
+    [Theory]
+    [InlineData(<span class="kw">null</span>)]
+    [InlineData(<span class="str">"Departamento Inexistente"</span>)]
+    <span class="kw">public void</span> ObtenerCapital_DesconocidoONulo_DevuelveNull(<span class="type">string?</span> departamento) =&gt;
+        Assert.Null(GeografiaColombia.ObtenerCapital(departamento));
+
+    [Fact]
+    <span class="kw">public void</span> DistanciaAproximadaKm_MismoDepartamento_EsCero()
+    {
+        <span class="cm">// DistanciaAproximadaKm devuelve double? — Assert.Equal(double, double, int) no acepta un nullable ahí</span>
+        <span class="type">var</span> distancia = GeografiaColombia.DistanciaAproximadaKm(<span class="str">"Santander"</span>, <span class="str">"Santander"</span>);
+        Assert.NotNull(distancia);
+        Assert.Equal(0, distancia.Value, precision: 6);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> DistanciaAproximadaKm_BogotaYCundinamarca_CompartenCoordenada_EsCero()
+    {
+        <span class="cm">// Ambas apuntan a la misma coordenada en el diccionario — no es un bug, es la fuente de datos</span>
+        <span class="type">var</span> distancia = GeografiaColombia.DistanciaAproximadaKm(<span class="str">"Bogotá D.C."</span>, <span class="str">"Cundinamarca"</span>);
+        Assert.NotNull(distancia);
+        Assert.Equal(0, distancia.Value, precision: 6);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> DistanciaAproximadaKm_DepartamentoInexistente_DevuelveNull() =&gt;
+        Assert.Null(GeografiaColombia.DistanciaAproximadaKm(<span class="str">"Santander"</span>, <span class="str">"No Existe"</span>));
+
+    [Fact]
+    <span class="kw">public void</span> DistanciaKmEntre_BogotaAMedellin_AproximadamenteCorrecta()
+    {
+        <span class="cm">// ~245km en línea recta — margen del 5% por ser una aproximación esférica</span>
+        <span class="type">var</span> km = GeografiaColombia.DistanciaKmEntre(4.7110, -74.0721, 6.2442, -75.5812);
+        Assert.InRange(km, 230, 260);
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="comfenalco">
+    <div class="head"><h2>Comfenalco — ReglasComfenalco</h2><span class="filename">UnitTest1.cs (clase ReglasComfenalcoTests)</span></div>
+    <span class="status ready">Listo — corre ya, sin reflexión ni InMemory DB</span>
+    <p class="desc"><b>Actualización tras el refactor:</b> <code>CalcularCategoriaCarne</code> y <code>Validar</code> ya no viven dentro de <code>SolicitudesController</code> — se movieron a <code>SGDS.Application/Helpers/ReglasComfenalco.cs</code> (mismo patrón que <code>CalculadoraEstampillas</code>). El controller solo resuelve el <code>TipoSolicitud</code> por id y le pasa el nombre + los datos ya parseados a este Helper. Resultado: se prueba directo, sin reflexión, sin agregar la referencia a <code>SGDS.Api</code> (esa referencia causaba un choque de archivos bloqueados cada vez que <code>dotnet test</code> intentaba recompilar la API mientras <code>dotnet run</code> estaba corriendo — con el Helper ya no hace falta).</p>
+<pre class="code"><span class="kw">using</span> SGDS.Application.Helpers;
+
+<span class="kw">namespace</span> SGDS.Application.Tests;
+
+<span class="kw">public class</span> ReglasComfenalcoTests
+{
+    <span class="cm">// SmmlvVigente actual en ReglasComfenalco = 1.423.500</span>
+    [Theory]
+    [InlineData(1_000_000, <span class="str">"A"</span>)]   <span class="cm">// menos de 2 SMMLV</span>
+    [InlineData(2_847_000, <span class="str">"A"</span>)]   <span class="cm">// exactamente 2 SMMLV -> límite inclusive en "A"</span>
+    [InlineData(2_847_001, <span class="str">"B"</span>)]   <span class="cm">// un peso más -> pasa a "B"</span>
+    [InlineData(5_694_000, <span class="str">"B"</span>)]   <span class="cm">// exactamente 4 SMMLV -> límite inclusive en "B"</span>
+    [InlineData(5_694_001, <span class="str">"C"</span>)]   <span class="cm">// un peso más -> pasa a "C"</span>
+    <span class="kw">public void</span> CalcularCategoriaCarne_ClasificaPorSmmlv(<span class="type">decimal</span> ingresos, <span class="type">string</span> categoriaEsperada)
+    {
+        Assert.Equal(categoriaEsperada, ReglasComfenalco.CalcularCategoriaCarne(ingresos));
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_CarneVirtual_EstadoInactivo_Bloquea()
+    {
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt; { [<span class="str">"estadoAfiliacion"</span>] = <span class="str">"Inactivo"</span> };
+
+        <span class="type">var</span> error = ReglasComfenalco.Validar(<span class="str">"Carné virtual"</span>, datos);
+
+        Assert.Contains(<span class="str">"ACTIVO"</span>, error);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_CarneVirtual_EstadoActivo_NoBloquea()
+    {
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt; { [<span class="str">"estadoAfiliacion"</span>] = <span class="str">"Activo"</span> };
+
+        Assert.Null(ReglasComfenalco.Validar(<span class="str">"Carné virtual"</span>, datos));
+    }
+
+    [Theory]
+    [InlineData(<span class="str">"Dependiente"</span>, 11, <span class="kw">true</span>)]   <span class="cm">// por debajo del mínimo -> bloquea</span>
+    [InlineData(<span class="str">"Dependiente"</span>, 12, <span class="kw">false</span>)]  <span class="cm">// justo el mínimo -> pasa</span>
+    [InlineData(<span class="str">"Independiente"</span>, 23, <span class="kw">true</span>)]
+    [InlineData(<span class="str">"Independiente"</span>, 24, <span class="kw">false</span>)]
+    <span class="kw">public void</span> Validar_SubsidioDesempleo_MinimoDeMesesSegunTipoTrabajador(<span class="type">string</span> tipoTrabajador, <span class="type">int</span> meses, <span class="type">bool</span> debeBloquear)
+    {
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt;
+        {
+            [<span class="str">"tipoTrabajador"</span>] = tipoTrabajador,
+            [<span class="str">"mesesAportados"</span>] = meses.ToString(),
+        };
+
+        <span class="type">var</span> error = ReglasComfenalco.Validar(<span class="str">"Subsidio de desempleo"</span>, datos);
+
+        Assert.Equal(debeBloquear, error != <span class="kw">null</span>);
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_SubsidioVivienda_TechoDe4Smmlv()
+    {
+        <span class="cm">// 4 * 1.423.500 = 5.694.000 — un peso más ya bloquea</span>
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt; { [<span class="str">"ingresosGrupoFamiliar"</span>] = <span class="str">"5694001"</span> };
+
+        Assert.NotNull(ReglasComfenalco.Validar(<span class="str">"Subsidio de vivienda"</span>, datos));
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_Creditos_CuotaSuperaMitadDelSalario_Bloquea()
+    {
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt;
+        {
+            [<span class="str">"salarioNeto"</span>] = <span class="str">"2000000"</span>,
+            [<span class="str">"cuotaMensualSolicitada"</span>] = <span class="str">"1000001"</span>, <span class="cm">// supera el 50% exacto por $1</span>
+        };
+
+        Assert.NotNull(ReglasComfenalco.Validar(<span class="str">"Créditos"</span>, datos));
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_Creditos_LibranzaSinConvenioActivo_Bloquea()
+    {
+        <span class="type">var</span> datos = <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt;
+        {
+            [<span class="str">"modalidadCredito"</span>] = <span class="str">"Libranza"</span>,
+            [<span class="str">"aportesAlDiaComfenalco"</span>] = <span class="str">"Sí"</span>,
+            [<span class="str">"convenioLibranzaActivo"</span>] = <span class="str">"No"</span>,
+        };
+
+        Assert.NotNull(ReglasComfenalco.Validar(<span class="str">"Créditos"</span>, datos));
+    }
+
+    [Fact]
+    <span class="kw">public void</span> Validar_TipoSinReglas_NoBloquea()
+    {
+        Assert.Null(ReglasComfenalco.Validar(<span class="str">"Protección al cesante"</span>, <span class="kw">new</span> Dictionary&lt;<span class="type">string</span>, <span class="type">string</span>&gt;()));
+    }
+}
+</pre>
+  </section>
+
+  <section class="module" id="frontend">
+    <div class="head"><h2>Frontend — comfenalcoConfig.ts</h2><span class="filename">SGDS.Frontend/src/config/comfenalcoConfig.test.ts</span></div>
+    <span class="status setup">🟡 Necesita instalar vitest — no está en package.json todavía</span>
+<pre class="code">npm install -D vitest --prefix SGDS.Frontend
+</pre>
+    <p class="desc" style="margin-top:14px">Agrega <code>"test": "vitest run"</code> a los scripts de <code>package.json</code>. El caso más importante aquí no es solo probar la fórmula — es probar que <b>coincide exactamente con la del backend</b>, porque hoy son dos implementaciones separadas del mismo cálculo (una en C#, otra en TypeScript) y pueden divergir sin que nada avise.</p>
+<pre class="code"><span class="kw">import</span> { describe, it, expect } <span class="kw">from</span> <span class="str">'vitest'</span>;
+<span class="kw">import</span> { calcularCategoriaCarne, calcularCuotaCredito, aniosAportes } <span class="kw">from</span> <span class="str">'./comfenalcoConfig'</span>;
+
+describe(<span class="str">'calcularCategoriaCarne'</span>, () =&gt; {
+  <span class="cm">// Mismos límites que SolicitudesController.CalcularCategoriaCarne (SmmlvVigente = 1.423.500)</span>
+  it.each([
+    [1_000_000, <span class="str">'A'</span>],
+    [2_847_000, <span class="str">'A'</span>],   <span class="cm">// exactamente 2 SMMLV</span>
+    [2_847_001, <span class="str">'B'</span>],
+    [5_694_000, <span class="str">'B'</span>],   <span class="cm">// exactamente 4 SMMLV</span>
+    [5_694_001, <span class="str">'C'</span>],
+  ])(<span class="str">'%i ingresos -> categoría %s'</span>, (ingresos, esperado) =&gt; {
+    expect(calcularCategoriaCarne(ingresos)).toBe(esperado);
+  });
+});
+
+describe(<span class="str">'calcularCuotaCredito'</span>, () =&gt; {
+  it(<span class="str">'caso de referencia: 10.000.000 a 12 meses al 20% E.A.'</span>, () =&gt; {
+    <span class="type">const</span> { cuota } = calcularCuotaCredito(10_000_000, 12, 0.20);
+    <span class="cm">// tasa mensual = 1.20^(1/12) - 1 ≈ 0.0153095; cuota ≈ 918.568,23 (verificado con Node, no a mano)</span>
+    expect(cuota).toBeCloseTo(918_568.23, 1);
+  });
+
+  it(<span class="str">'tasa 0% usa división simple, no la fórmula francesa'</span>, () =&gt; {
+    <span class="type">const</span> { cuota } = calcularCuotaCredito(1_200_000, 12, 0);
+    expect(cuota).toBe(100_000);
+  });
+});
+
+describe(<span class="str">'aniosAportes'</span>, () =&gt; {
+  it(<span class="str">'devuelve el año actual y los 3 anteriores'</span>, () =&gt; {
+    expect(aniosAportes(<span class="kw">new</span> Date(<span class="str">'2026-09-15'</span>))).toEqual([2026, 2025, 2024, 2023]);
+  });
+});
+</pre>
+  </section>
+
+</main>
+
+<footer>Valores esperados calculados a mano contra la implementación real leída en esta sesión — si cambias una fórmula, estos números dejan de ser válidos y hay que recalcularlos, no solo actualizar el assert.</footer>

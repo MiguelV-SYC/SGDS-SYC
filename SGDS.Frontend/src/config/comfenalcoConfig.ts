@@ -111,14 +111,3 @@ export const DATOS_CREDITOS_VACIOS: DatosCreditos = {
   aportesAlDiaComfenalco: 'Sí',
   convenioLibranzaActivo: 'Sí',
 };
-
-export function construirDatosAdicionalesCreditos(datos: DatosCreditos): Record<string, unknown> {
-  return {
-    modalidadCredito: datos.modalidadCredito,
-    salarioNeto: datos.salarioNeto,
-    cuotaMensualSolicitada: datos.cuotaMensualSolicitada,
-    usaCuotaMonetaria: datos.usaCuotaMonetaria,
-    aportesAlDiaComfenalco: datos.aportesAlDiaComfenalco,
-    convenioLibranzaActivo: datos.convenioLibranzaActivo,
-  };
-}

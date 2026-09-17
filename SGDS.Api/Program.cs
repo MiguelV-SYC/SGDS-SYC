@@ -100,9 +100,12 @@ QuestPDF.Settings.License = LicenseType.Community;
 
 var app = builder.Build();
 
-// Aplica automáticamente cualquier migración pendiente de EF Core al arrancar la API.
-using (var scope = app.Services.CreateScope())
+// Aplica automáticamente cualquier migración pendiente de EF Core al arrancar la API — salvo en
+// pruebas de integración HTTP (WebApplicationFactory, entorno "Testing"), donde el DbContext se
+// reemplaza por un proveedor en memoria que no soporta migraciones relacionales.
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     scope.ServiceProvider.GetRequiredService<SgdsDbContext>().Database.Migrate();
 }
 
@@ -124,3 +127,7 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+// Necesario para que WebApplicationFactory<Program> (pruebas de integración HTTP) pueda
+// referenciar este ensamblado — el Program autogenerado por top-level statements es internal.
+public partial class Program { }

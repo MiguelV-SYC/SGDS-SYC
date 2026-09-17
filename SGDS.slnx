@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/SGDS.Application.Tests/SGDS.Application.Tests.csproj" />
+  </Folder>
   <Project Path="SGDS.Api/SGDS.Api.csproj" />
   <Project Path="SGDS.Application/SGDS.Application.csproj" />
   <Project Path="SGDS.Domain/SGDS.Domain.csproj" />

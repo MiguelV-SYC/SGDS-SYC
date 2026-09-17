@@ -41,7 +41,7 @@ import { agendarTurno } from '../services/libroTotalService';
 import {
   DATOS_CARNE_VACIOS, construirDatosAdicionalesCarneVirtual, type DatosCarneVirtual,
   DATOS_SUBSIDIO_DESEMPLEO_VACIOS, construirDatosAdicionalesSubsidioDesempleo, type DatosSubsidioDesempleo,
-  DATOS_CREDITOS_VACIOS, construirDatosAdicionalesCreditos, type DatosCreditos,
+  DATOS_CREDITOS_VACIOS, type DatosCreditos,
 } from '../config/comfenalcoConfig';
 import FormularioCarneVirtual from '../components/comfenalco/FormularioCarneVirtual';
 import FormularioSubsidioDesempleo from '../components/comfenalco/FormularioSubsidioDesempleo';
@@ -635,7 +635,7 @@ export default function NuevaSolicitudPage() {
           : esSubsidioDesempleo
             ? JSON.stringify(construirDatosAdicionalesSubsidioDesempleo(datosSubsidioDesempleo))
             : esCreditos
-              ? JSON.stringify(construirDatosAdicionalesCreditos(datosCreditos))
+              ? JSON.stringify(datosCreditos)
               : campos
             ? JSON.stringify(datosTramite)
             : JSON.stringify({ observaciones });

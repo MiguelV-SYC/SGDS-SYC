@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, Comfenalco]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # Unitarias + integración del backend — nada de infraestructura externa (BD en memoria,
+  # WebApplicationFactory), así que corren rápido y no pueden fallar por flaky de red/BD.
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar dependencias
+        run: dotnet restore
+
+      - name: Pruebas unitarias (SGDS.Application.Tests)
+        run: dotnet test tests/SGDS.Application.Tests --no-restore --logger "trx;LogFileName=unit.trx" --results-directory TestResults
+
+      - name: Pruebas de integración (SGDS.Api.Tests)
+        run: dotnet test tests/SGDS.Api.Tests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory TestResults
+
+      - name: Subir resultados
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: backend-test-results
+          path: TestResults/
+          retention-days: 30
+
+  # Unitarias del frontend (Vitest) — puras, sin backend.
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: SGDS.Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: SGDS.Frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Pruebas unitarias (Vitest)
+        run: npm run test
+
+  # E2E (Playwright) contra la app real — backend + frontend + Postgres reales, levantados solo
+  # para este job. Se restringe a Chromium (ver tests/e2e/cadena-gotrace-infoconsumo.spec.ts): esa
+  # prueba consume un fixture único, y correr varios navegadores en paralelo compite por él.
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sgds_db
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ConnectionStrings__SgdsConnection: Host=localhost;Port=5432;Database=sgds_db;Username=postgres;Password=postgres
+      # Clave exclusiva de este pipeline — nunca la clave real de desarrollo/producción (esa vive
+      # en dotnet user-secrets y no se commitea). Solo firma tokens de una API que muere al
+      # terminar el job.
+      Jwt__Key: SGDS-CI-clave-de-firma-efimera-no-es-un-secreto-real-2026
+      Jwt__Issuer: SGDS.Api
+      Jwt__Audience: SGDS.Frontend
+      SGDS_JWT_KEY: SGDS-CI-clave-de-firma-efimera-no-es-un-secreto-real-2026
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Instalar cliente de Postgres
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Compilar y arrancar el backend (aplica migraciones al iniciar)
+        run: |
+          dotnet build SGDS.Api --configuration Release
+          nohup dotnet run --project SGDS.Api --configuration Release --no-build --urls http://localhost:5158 > backend.log 2>&1 &
+          npx --yes wait-on@8 -t 60000 http://localhost:5158/swagger/index.html
+
+      - name: Sembrar datos de referencia y fixtures de E2E
+        run: psql -h localhost -U postgres -d sgds_db -f tests/e2e/fixtures/ci-seed.sql
+
+      - name: Instalar dependencias del frontend y arrancar Vite
+        working-directory: SGDS.Frontend
+        run: |
+          npm ci
+          nohup npm run dev -- --port 5173 > ../frontend.log 2>&1 &
+          npx --yes wait-on@8 -t 60000 http://localhost:5173
+
+      - name: Instalar dependencias raíz y navegador de Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Correr las pruebas E2E (Chromium)
+        run: npx playwright test tests/e2e --project=chromium
+
+      - name: Logs del backend y frontend (si algo falló)
+        if: ${{ failure() }}
+        run: |
+          echo "===== Backend ====="; cat backend.log || true
+          echo "===== Frontend ====="; cat frontend.log || true
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

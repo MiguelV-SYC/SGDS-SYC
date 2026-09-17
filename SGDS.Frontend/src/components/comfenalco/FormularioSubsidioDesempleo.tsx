@@ -11,6 +11,27 @@ function etiquetaMes(clave: string) {
   return `${MESES_NOMBRE[Number(mes) - 1]} ${anio}`;
 }
 
+function SelectorAnioMes({ titulo, anio, mes, onAnio, onMes }: {
+  titulo: string; anio: string; mes: string; onAnio: (v: string) => void; onMes: (v: string) => void;
+}) {
+  return (
+    <div className="flex items-end gap-1.5">
+      <div>
+        <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">{titulo} — Año</label>
+        <select value={anio} onChange={(e) => onAnio(e.target.value)} className={inputClase}>
+          {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">Mes</label>
+        <select value={mes} onChange={(e) => onMes(e.target.value)} className={inputClase}>
+          {MESES_NOMBRE.map((nombre, i) => <option key={nombre} value={i + 1}>{nombre}</option>)}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   value: DatosSubsidioDesempleo;
   onChange: (siguiente: DatosSubsidioDesempleo) => void;
@@ -68,37 +89,9 @@ export default function FormularioSubsidioDesempleo({ value, onChange }: Props) 
         <p className="text-[11px] text-ink-400 mb-2">Marca el periodo de aportes (desde/hasta) y agrégalo — se puede repetir para periodos discontinuos.</p>
 
         <div className="flex items-end gap-2 mb-3 flex-wrap">
-          <div className="flex items-end gap-1.5">
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">Desde — Año</label>
-              <select value={desdeAnio} onChange={(e) => setDesdeAnio(e.target.value)} className={inputClase}>
-                {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">Mes</label>
-              <select value={desdeMes} onChange={(e) => setDesdeMes(e.target.value)} className={inputClase}>
-                {MESES_NOMBRE.map((nombre, i) => <option key={nombre} value={i + 1}>{nombre}</option>)}
-              </select>
-            </div>
-          </div>
-
+          <SelectorAnioMes titulo="Desde" anio={desdeAnio} mes={desdeMes} onAnio={setDesdeAnio} onMes={setDesdeMes} />
           <span className="text-[11.5px] text-ink-400 font-semibold pb-2.5">hasta</span>
-
-          <div className="flex items-end gap-1.5">
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">Hasta — Año</label>
-              <select value={hastaAnio} onChange={(e) => setHastaAnio(e.target.value)} className={inputClase}>
-                {ANIOS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-600 mb-1">Mes</label>
-              <select value={hastaMes} onChange={(e) => setHastaMes(e.target.value)} className={inputClase}>
-                {MESES_NOMBRE.map((nombre, i) => <option key={nombre} value={i + 1}>{nombre}</option>)}
-              </select>
-            </div>
-          </div>
+          <SelectorAnioMes titulo="Hasta" anio={hastaAnio} mes={hastaMes} onAnio={setHastaAnio} onMes={setHastaMes} />
 
           <button
             type="button"
