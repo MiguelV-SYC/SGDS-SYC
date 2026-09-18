@@ -62,7 +62,7 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests]
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -119,10 +119,10 @@ jobs:
           # que solo se registra en Development, no depende de que el entorno quede como se espera.
           # 180s: sobre una Postgres recién creada, EF Core tiene que aplicar TODAS las
           # migraciones acumuladas del proyecto de una sola vez, no solo la última.
-          # 300s: la última corrida real mostró que el backend SÍ termina de arrancar (~20
-          # migraciones contra el Postgres del runner) muy cerca del límite anterior de 180s —
-          # se sube el margen en vez de intentar adivinar milisegundos.
-          npx --yes wait-on@8 -t 300000 -i 2000 http://127.0.0.1:5158/api/Proyectos || {
+          # 600s: confirmado con curl manual en un fallo real que el backend arranca bien y
+          # responde 200 — simplemente tardó más de 300s esa vez (Postgres del runner bajo carga
+          # compartida). No es un bug de red ni de configuración, solo falta de margen.
+          npx --yes wait-on@8 -t 600000 -i 3000 http://127.0.0.1:5158/api/Proyectos || {
             echo "::group::backend.log (el backend nunca respondió)"
             cat backend.log
             echo "::endgroup::"
