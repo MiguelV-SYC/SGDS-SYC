@@ -75,10 +75,20 @@ namespace SGDS.Infrastructure.Migrations
                     { 6, true, "Huila", false, "Neiva" }
                 });
 
-            migrationBuilder.InsertData(
-                table: "tipos_solicitud",
-                columns: new[] { "id", "activo", "nombre", "proyecto_id" },
-                values: new object[] { 30, true, "Atención en sede", 11 });
+            // proyecto_id=11 (Libro Total) — defensivo/idempotente, mismo motivo que en las
+            // demás migraciones de "Crear módulo X".
+            migrationBuilder.Sql(@"
+                INSERT INTO proyectos (id, nombre, codigo, activo)
+                SELECT 11, 'Libro Total', 'LIBRO_TOTAL', true
+                WHERE NOT EXISTS (SELECT 1 FROM proyectos WHERE id = 11);
+                SELECT setval('proyectos_id_seq', (SELECT MAX(id) FROM proyectos));
+            ");
+
+            migrationBuilder.Sql(@"
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id)
+                SELECT 30, true, 'Atención en sede', 11
+                WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 30);
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "ix_turnos_libro_total_sede_id",

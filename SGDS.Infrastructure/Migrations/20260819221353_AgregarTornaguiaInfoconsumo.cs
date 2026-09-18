@@ -51,17 +51,24 @@ namespace SGDS.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "tipos_solicitud",
-                columns: new[] { "id", "activo", "nombre", "proyecto_id" },
-                values: new object[,]
-                {
-                    { 20, true, "Movilización", 8 },
-                    { 21, true, "Reenvío", 8 },
-                    { 22, true, "Tránsito", 8 },
-                    { 23, true, "Tránsito local", 8 },
-                    { 24, true, "Tránsito declarado", 8 }
-                });
+            // proyecto_id=8 (Infoconsumo) — igual que en SeedTiposSolicitudEstampillas, se crea
+            // de forma defensiva/idempotente porque ninguna migración lo crea todavía; en las
+            // bases existentes ya existía a mano y esta migración no se vuelve a ejecutar ahí.
+            migrationBuilder.Sql(@"
+                INSERT INTO proyectos (id, nombre, codigo, activo)
+                SELECT 8, 'Infoconsumo', 'INFOCONSUMO', true
+                WHERE NOT EXISTS (SELECT 1 FROM proyectos WHERE id = 8);
+                SELECT setval('proyectos_id_seq', (SELECT MAX(id) FROM proyectos));
+            ");
+
+            migrationBuilder.Sql(@"
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 20, true, 'Movilización', 8 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 20);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 21, true, 'Reenvío', 8 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 21);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 22, true, 'Tránsito', 8 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 22);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 23, true, 'Tránsito local', 8 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 23);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 24, true, 'Tránsito declarado', 8 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 24);
+                SELECT setval('tipos_solicitud_id_seq', (SELECT MAX(id) FROM tipos_solicitud));
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "ix_tornaguias_infoconsumo_placa_vehiculo_nit_transportador",

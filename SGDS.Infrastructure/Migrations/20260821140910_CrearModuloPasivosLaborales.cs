@@ -47,15 +47,22 @@ namespace SGDS.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "tipos_solicitud",
-                columns: new[] { "id", "activo", "nombre", "proyecto_id" },
-                values: new object[,]
-                {
-                    { 27, true, "Gestión de pasivo pensional", 6 },
-                    { 28, true, "Gestión de pasivo laboral", 6 },
-                    { 29, true, "Consulta de expediente digital", 6 }
-                });
+            // proyecto_id=6 (Pasivos Laborales) — defensivo/idempotente, mismo motivo que en las
+            // demás migraciones de "Crear módulo X". Se crea directo con codigo='PL' (el destino
+            // final del UPDATE de más abajo), así que ese UPDATE simplemente no encuentra nada
+            // que cambiar en una base nueva.
+            migrationBuilder.Sql(@"
+                INSERT INTO proyectos (id, nombre, codigo, activo)
+                SELECT 6, 'Pasivos Laborales', 'PL', true
+                WHERE NOT EXISTS (SELECT 1 FROM proyectos WHERE id = 6);
+                SELECT setval('proyectos_id_seq', (SELECT MAX(id) FROM proyectos));
+            ");
+
+            migrationBuilder.Sql(@"
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 27, true, 'Gestión de pasivo pensional', 6 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 27);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 28, true, 'Gestión de pasivo laboral', 6 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 28);
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id) SELECT 29, true, 'Consulta de expediente digital', 6 WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 29);
+            ");
 
             migrationBuilder.CreateIndex(
                 name: "ix_instrumentos_pasivo_laboral_solicitud_colpensiones_id",

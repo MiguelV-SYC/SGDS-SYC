@@ -63,10 +63,20 @@ namespace SGDS.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.InsertData(
-                table: "tipos_solicitud",
-                columns: new[] { "id", "activo", "nombre", "proyecto_id" },
-                values: new object[] { 26, true, "Registro de trazabilidad de lote", 9 });
+            // proyecto_id=9 (Gotrace) — defensivo/idempotente, mismo motivo que en las demás
+            // migraciones de "Crear módulo X" (ver SeedTiposSolicitudEstampillas).
+            migrationBuilder.Sql(@"
+                INSERT INTO proyectos (id, nombre, codigo, activo)
+                SELECT 9, 'Gotrace', 'GOTRACE', true
+                WHERE NOT EXISTS (SELECT 1 FROM proyectos WHERE id = 9);
+                SELECT setval('proyectos_id_seq', (SELECT MAX(id) FROM proyectos));
+            ");
+
+            migrationBuilder.Sql(@"
+                INSERT INTO tipos_solicitud (id, activo, nombre, proyecto_id)
+                SELECT 26, true, 'Registro de trazabilidad de lote', 9
+                WHERE NOT EXISTS (SELECT 1 FROM tipos_solicitud WHERE id = 26);
+            ");
 
             // InsertData usa un id explícito y no avanza la secuencia de identidad de Postgres —
             // se sincroniza manualmente para que los próximos INSERT no colisionen.
