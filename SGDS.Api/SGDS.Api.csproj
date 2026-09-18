@@ -32,7 +32,11 @@
          si no libSkiaSharp.so no existe en el runner y falla igual que System.Drawing.
     -->
     <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.14" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+    <!-- Fijado a la MISMA versión que el SkiaSharp gestionado que trae QuestPDF (2.88.7,
+         confirmado listando paquetes transitivos) — la última versión de NativeAssets.Linux
+         (3.x) trae libSkiaSharp v119, incompatible con el managed 2.88.7 (que solo acepta
+         nativo 88.1 a 89.0) y lanza en tiempo de ejecución igual que antes. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.7" />
   </ItemGroup>
 
   <ItemGroup>
