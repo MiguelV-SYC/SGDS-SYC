@@ -20,15 +20,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('radicar Carné virtual y ver la previsualización con código de barras', async ({ page }) => {
-  // Diagnóstico: el frontend traga el error de esta petición con .catch(() => {}), así que sin
-  // esto no hay forma de ver por qué la imagen nunca aparece — se imprime al log de la corrida.
-  page.on('response', async (response) => {
-    if (response.url().includes('carne-virtual-barcode') && !response.ok()) {
-      console.log(`[barcode] ${response.status()} ${response.url()}`);
-      console.log(await response.text().catch(() => '(sin cuerpo)'));
-    }
-  });
-
   await page.goto(`/solicitudes/nueva?proyectoId=${PROYECTO_COMFENALCO_ID}`);
 
   // 1. Tipo de solicitud
