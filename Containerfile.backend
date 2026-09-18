@@ -56,6 +56,11 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+# No corre como root: el usuario "app" ya viene en la imagen base de .NET. La carpeta de
+# documentos subidos se crea a su nombre para que el volumen nuevo herede ese dueño.
+RUN mkdir -p /app/Almacenamiento && chown app:app /app/Almacenamiento
+USER app
+
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 

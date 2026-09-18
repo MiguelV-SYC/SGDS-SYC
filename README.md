@@ -357,7 +357,7 @@ Además de correr el proyecto de forma nativa (como se describe arriba), todo el
 |---|---|---|---|
 | Base de datos (Postgres 18) | `sgds-db` | imagen oficial `postgres:18` | `5433` → `5432` |
 | API (ASP.NET Core) | `sgds-backend` | `Containerfile.backend` | `5158` → `8080` |
-| Frontend (React + nginx) | `sgds-frontend` | `Containerfile.frontend` | `5173` → `80` |
+| Frontend (React + nginx) | `sgds-frontend` | `Containerfile.frontend` | `5173` → `8080` |
 
 Los tres se orquestan desde `compose.yaml`, en la raíz del repo, compartiendo la red `sgds-network` y los volúmenes `sgds-pgdata` (datos de Postgres) y `sgds-almacenamiento` (archivos subidos por la app).
 

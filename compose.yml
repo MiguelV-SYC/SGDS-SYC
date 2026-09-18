@@ -106,6 +106,6 @@ services:
     depends_on:
       - sgds-backend
     ports:
-      - "5173:80"
+      - "5173:8080"
     networks:
       - sgds-network

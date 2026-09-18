@@ -39,7 +39,7 @@ RUN npm run build
 # ============================================================
 # ETAPA 2: "final" — nginx sirviendo los archivos ya compilados
 # ============================================================
-FROM nginx:alpine AS final
+FROM nginxinc/nginx-unprivileged:alpine AS final
 
 # Reemplazamos la configuración por defecto de nginx por la
 # nuestra, que sabe manejar el ruteo de una SPA de React.
@@ -50,4 +50,6 @@ COPY nginx.frontend.conf /etc/nginx/conf.d/default.conf
 # compilar en esta imagen final — solo HTML/CSS/JS y nginx.
 COPY --from=build /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+# Imagen sin privilegios: no puede usar el puerto 80, por eso escucha en 8080.
+USER nginx
+EXPOSE 8080
