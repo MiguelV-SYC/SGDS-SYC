@@ -109,10 +109,12 @@ jobs:
       - name: Compilar y arrancar el backend (aplica migraciones al iniciar)
         run: |
           dotnet build SGDS.Api --configuration Release
-          # 0.0.0.0 en vez de localhost: Kestrel bindeado a "localhost" puede resolver solo a ::1
-          # (IPv6) en el runner, mientras wait-on/Node le pega a 127.0.0.1 (IPv4) — ambas puntas
-          # quedan explícitas para no depender de cómo cada proceso resuelva "localhost".
-          nohup dotnet run --project SGDS.Api --configuration Release --no-build --urls http://0.0.0.0:5158 > backend.log 2>&1 &
+          # stdbuf -oL: dotnet, al escribir a un archivo (no a una TTY), bufferiza su stdout por
+          # bloques en vez de por línea — así que backend.log aparecía vacío durante minutos y
+          # todo el contenido se volcaba de golpe recién cuando el buffer se vaciaba. stdbuf fuerza
+          # buffering por línea para que el log refleje el progreso real, no un volcado al final.
+          nohup stdbuf -oL -eL dotnet run --project SGDS.Api --configuration Release --no-build --urls http://0.0.0.0:5158 > backend.log 2>&1 &
+          BACKEND_PID=$!
           # /api/Proyectos es [AllowAnonymous] y siempre está mapeado — a diferencia de Swagger,
           # que solo se registra en Development, no depende de que el entorno quede como se espera.
           # 180s: sobre una Postgres recién creada, EF Core tiene que aplicar TODAS las
@@ -124,6 +126,12 @@ jobs:
             echo "::group::backend.log (el backend nunca respondió)"
             cat backend.log
             echo "::endgroup::"
+            echo "::group::diagnóstico de red (el proceso y el puerto en el momento del timeout)"
+            ps aux | grep -i dotnet || true
+            ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null || true
+            curl -v --max-time 5 http://127.0.0.1:5158/api/Proyectos || true
+            echo "::endgroup::"
+            kill "$BACKEND_PID" 2>/dev/null || true
             exit 1
           }
 
