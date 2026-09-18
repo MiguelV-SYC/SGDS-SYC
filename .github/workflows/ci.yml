@@ -119,10 +119,12 @@ jobs:
           # que solo se registra en Development, no depende de que el entorno quede como se espera.
           # 180s: sobre una Postgres recién creada, EF Core tiene que aplicar TODAS las
           # migraciones acumuladas del proyecto de una sola vez, no solo la última.
-          # 600s: confirmado con curl manual en un fallo real que el backend arranca bien y
-          # responde 200 — simplemente tardó más de 300s esa vez (Postgres del runner bajo carga
-          # compartida). No es un bug de red ni de configuración, solo falta de margen.
-          npx --yes wait-on@8 -t 600000 -i 3000 http://127.0.0.1:5158/api/Proyectos || {
+          # http-get:// en vez de http://: wait-on por defecto hace un HEAD para recursos http(s).
+          # En 3 corridas seguidas (300s, 300s, 600s) agotó SIEMPRE el timeout completo mientras un
+          # curl GET manual conectaba al instante y recibía 200 — no era falta de margen, wait-on
+          # nunca quedaba satisfecho con la respuesta a su HEAD. http-get:// fuerza que use GET,
+          # igual que el curl que sí funcionaba.
+          npx --yes wait-on@8 -t 120000 -i 2000 http-get://127.0.0.1:5158/api/Proyectos || {
             echo "::group::backend.log (el backend nunca respondió)"
             cat backend.log
             echo "::endgroup::"
@@ -143,7 +145,7 @@ jobs:
         run: |
           npm ci
           nohup npm run dev -- --port 5173 > ../frontend.log 2>&1 &
-          npx --yes wait-on@8 -t 60000 http://localhost:5173
+          npx --yes wait-on@8 -t 60000 http-get://localhost:5173
 
       - name: Instalar dependencias raíz y navegador de Playwright
         run: |
