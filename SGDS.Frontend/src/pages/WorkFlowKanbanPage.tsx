@@ -1,6 +1,7 @@
 import { useState, useEffect, type DragEvent } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import { alPresionarEnterOEspacio } from '../utils/teclado';
 import {
   getSolicitudesListado,
   cambiarEstado,
@@ -382,7 +383,10 @@ export default function WorkflowKanbanPage() {
                     {tarjetas.map((t) => (
                       <div
                         key={t.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/solicitudes/${t.id}`)}
+                        onKeyDown={alPresionarEnterOEspacio(() => navigate(`/solicitudes/${t.id}`))}
                         className="bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="text-[11px] text-ink-400 font-semibold mb-1">#{t.numero}</div>
@@ -430,7 +434,10 @@ export default function WorkflowKanbanPage() {
                     {tarjetas.map((s) => (
                       <div
                         key={s.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/solicitudes/${s.id}`)}
+                        onKeyDown={alPresionarEnterOEspacio(() => navigate(`/solicitudes/${s.id}`))}
                         className="bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="text-[11px] text-ink-400 font-semibold mb-1">#{s.numero}</div>
@@ -475,7 +482,10 @@ export default function WorkflowKanbanPage() {
                     {tarjetas.map((t) => (
                       <div
                         key={t.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/solicitudes/${t.id}`)}
+                        onKeyDown={alPresionarEnterOEspacio(() => navigate(`/solicitudes/${t.id}`))}
                         className="bg-white rounded-xl p-3.5 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="text-[10.5px] text-ink-400 font-semibold mb-1">Turno {t.numeroTurno}</div>
@@ -541,7 +551,10 @@ export default function WorkflowKanbanPage() {
                         key={s.id}
                         draggable
                         onDragStart={() => handleDragStart(s)}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => navigate(`/solicitudes/${s.id}`)}
+                        onKeyDown={alPresionarEnterOEspacio(() => navigate(`/solicitudes/${s.id}`))}
                         className="bg-white rounded-xl p-3.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
                       >
                         <div className="text-[11px] text-ink-400 font-semibold mb-1">#{s.numero}</div>

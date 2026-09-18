@@ -157,6 +157,12 @@ export default function LiquidacionPasivoLaboralPage() {
                 </div>
                 <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
+                  <thead className="sr-only">
+                    <tr>
+                      <th scope="col">Concepto</th>
+                      <th scope="col">Valor</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr>
                       <td className="px-5 py-3 text-[13px] font-semibold text-ink-900 border-b border-line">Tiempo laborado en la entidad</td>

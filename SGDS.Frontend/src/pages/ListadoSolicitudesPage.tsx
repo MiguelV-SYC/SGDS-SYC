@@ -11,6 +11,7 @@ import {
 } from '../services/solicitudService';
 import { getProyectosActivos, getProyectosAdmin, type ProyectoResponseDto } from '../services/proyectoService';
 import { getColorProyecto } from '../config/colorPorProyecto';
+import Paginador from '../components/shared/Paginador';
 
 const POR_PAGINA = 8;
 
@@ -331,23 +332,7 @@ useEffect(() => {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-[14px] border-t border-line">
-            <span className="text-xs text-ink-600">Página {pagina} de {totalPaginas}</span>
-            <div className="flex gap-1.5">
-              <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40">‹</button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
-                .slice(Math.max(0, pagina - 3), Math.max(0, pagina - 3) + 5)
-                .map((n) => (
-                  <button key={n} onClick={() => setPagina(n)}
-                    className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs ${
-                      n === pagina ? 'bg-[var(--color-accento)] border-[var(--color-accento)] text-white font-semibold' : 'border-line bg-white text-ink-600'
-                    }`}>{n}</button>
-                ))}
-              <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40">›</button>
-            </div>
-          </div>
+          <Paginador pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
         </div>
       </main>
     </div>

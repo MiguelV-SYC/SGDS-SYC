@@ -25,7 +25,7 @@ WORKDIR /app
 # "lockfile" con las versiones exactas), para aprovechar la caché
 # de Podman mientras no cambien.
 COPY SGDS.Frontend/package.json SGDS.Frontend/package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Ahora copiamos el resto del código fuente del frontend.
 COPY SGDS.Frontend/ ./

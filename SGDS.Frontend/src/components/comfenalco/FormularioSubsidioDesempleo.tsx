@@ -59,7 +59,7 @@ export default function FormularioSubsidioDesempleo({ value, onChange }: Props) 
       const clave = `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, '0')}`;
       if (!value.mesesSeleccionados.includes(clave) && !nuevos.includes(clave)) nuevos.push(clave);
     }
-    set('mesesSeleccionados', [...value.mesesSeleccionados, ...nuevos].sort());
+    set('mesesSeleccionados', [...value.mesesSeleccionados, ...nuevos].sort((a, b) => a.localeCompare(b)));
   }
 
   function quitarMes(clave: string) {

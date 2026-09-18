@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import { getVehiculos, type VehiculoResponseDto } from '../services/vehiculoService';
 import { useColorProyectoActivo } from '../hooks/useColorProyectoActivo';
+import Paginador from '../components/shared/Paginador';
 
 const POR_PAGINA = 6;
 
@@ -162,38 +163,7 @@ export default function VehiculosListPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-[14px] border-t border-line">
-            <span className="text-xs text-ink-600">Página {paginaActual} de {totalPaginas}</span>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                disabled={paginaActual === 1}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              {Array.from({ length: Math.min(totalPaginas, 3) }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setPagina(n)}
-                  className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs ${
-                    n === paginaActual
-                      ? 'bg-[var(--color-accento)] border-[var(--color-accento)] text-white font-semibold'
-                      : 'border-line bg-white text-ink-600'
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                disabled={paginaActual === totalPaginas}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <Paginador pagina={paginaActual} totalPaginas={totalPaginas} onCambiar={setPagina} />
         </div>
       </main>
     </div>

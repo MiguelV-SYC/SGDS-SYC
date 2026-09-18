@@ -4,6 +4,8 @@ import Sidebar from '../components/layout/Sidebar';
 import { getEmpresas, type EmpresaResponseDto } from '../services/empresaService';
 import { getProyectosActivos, type ProyectoResponseDto } from '../services/proyectoService';
 import { useColorProyectoActivo } from '../hooks/useColorProyectoActivo';
+import FiltroListado from '../components/shared/FiltroListado';
+import Paginador from '../components/shared/Paginador';
 
 const POR_PAGINA = 6;
 
@@ -82,36 +84,14 @@ export default function ListadoEmpresasPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2.5 bg-white border border-line rounded-xl px-3.5 py-3 mb-[18px] flex-wrap">
-          <div className="flex items-center gap-2 flex-1 min-w-[200px] bg-paper border border-line rounded-[9px] px-3 py-2">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" className="w-[15px] h-[15px] stroke-ink-400 shrink-0">
-              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4-4" />
-            </svg>
-            <input
-              placeholder="Buscar por razón social o NIT..."
-              value={busqueda}
-              onChange={(e) => {
-                setBusqueda(e.target.value);
-                setPagina(1);
-              }}
-              className="border-none outline-none bg-transparent text-[12.5px] w-full font-body"
-            />
-          </div>
-          <div className="w-px h-[22px] bg-line" />
-          <select
-            value={proyectoFiltro}
-            onChange={(e) => {
-              setProyectoFiltro(e.target.value);
-              setPagina(1);
-            }}
-            className="bg-paper border border-line rounded-[9px] px-3 py-2 text-xs text-ink-600 font-medium outline-none"
-          >
-            <option value="">Proyecto con actividad</option>
-            {proyectos.map((p) => (
-              <option key={p.id} value={p.id}>{p.nombre}</option>
-            ))}
-          </select>
-        </div>
+        <FiltroListado
+          busqueda={busqueda}
+          onBusqueda={(v) => { setBusqueda(v); setPagina(1); }}
+          placeholder="Buscar por razón social o NIT..."
+          proyectos={proyectos}
+          proyectoFiltro={proyectoFiltro}
+          onProyectoFiltro={(v) => { setProyectoFiltro(v); setPagina(1); }}
+        />
 
         <div className="bg-white border border-line rounded-[14px] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-[14px] border-b border-line">
@@ -184,40 +164,7 @@ export default function ListadoEmpresasPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-[14px] border-t border-line">
-            <span className="text-xs text-ink-600">Página {pagina} de {totalPaginas}</span>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                disabled={pagina === 1}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1)
-                .slice(Math.max(0, pagina - 3), Math.max(0, pagina - 3) + 5)
-                .map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setPagina(n)}
-                    className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs ${
-                      n === pagina
-                        ? 'bg-[var(--color-accento)] border-[var(--color-accento)] text-white font-semibold'
-                        : 'border-line bg-white text-ink-600'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              <button
-                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                disabled={pagina === totalPaginas}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <Paginador pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
         </div>
       </main>
     </div>

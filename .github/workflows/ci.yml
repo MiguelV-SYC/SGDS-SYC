@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: SGDS.Frontend/package-lock.json
 
       - name: Instalar dependencias
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Pruebas unitarias (Vitest)
         run: npm run test
@@ -109,33 +109,16 @@ jobs:
       - name: Compilar y arrancar el backend (aplica migraciones al iniciar)
         run: |
           dotnet build SGDS.Api --configuration Release
-          # stdbuf -oL: dotnet, al escribir a un archivo (no a una TTY), bufferiza su stdout por
-          # bloques en vez de por línea — así que backend.log aparecía vacío durante minutos y
-          # todo el contenido se volcaba de golpe recién cuando el buffer se vaciaba. stdbuf fuerza
-          # buffering por línea para que el log refleje el progreso real, no un volcado al final.
-          nohup stdbuf -oL -eL dotnet run --project SGDS.Api --configuration Release --no-build --urls http://0.0.0.0:5158 > backend.log 2>&1 &
-          BACKEND_PID=$!
-          # /api/Proyectos es [AllowAnonymous] y siempre está mapeado — a diferencia de Swagger,
-          # que solo se registra en Development, no depende de que el entorno quede como se espera.
-          # 180s: sobre una Postgres recién creada, EF Core tiene que aplicar TODAS las
-          # migraciones acumuladas del proyecto de una sola vez, no solo la última.
-          # http-get:// en vez de http://: wait-on por defecto hace un HEAD para recursos http(s).
-          # En 3 corridas seguidas (300s, 300s, 600s) agotó SIEMPRE el timeout completo mientras un
-          # curl GET manual conectaba al instante y recibía 200 — no era falta de margen, wait-on
-          # nunca quedaba satisfecho con la respuesta a su HEAD. http-get:// fuerza que use GET,
-          # igual que el curl que sí funcionaba.
-          npx --yes wait-on@8 -t 120000 -i 2000 http-get://127.0.0.1:5158/api/Proyectos || {
+          nohup dotnet run --project SGDS.Api --configuration Release --no-build --urls http://localhost:5158 > backend.log 2>&1 &
+          # /api/Proyectos es [AllowAnonymous] y siempre está mapeado (Swagger solo existe en
+          # Development). Se sondea con curl (GET) y no con wait-on: este hace HEAD por defecto y
+          # nunca quedaba satisfecho, agotando el timeout aunque el backend ya respondía 200.
+          if ! timeout 120 bash -c 'until curl -sf -o /dev/null http://localhost:5158/api/Proyectos; do sleep 2; done'; then
             echo "::group::backend.log (el backend nunca respondió)"
             cat backend.log
             echo "::endgroup::"
-            echo "::group::diagnóstico de red (el proceso y el puerto en el momento del timeout)"
-            ps aux | grep -i dotnet || true
-            ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null || true
-            curl -v --max-time 5 http://127.0.0.1:5158/api/Proyectos || true
-            echo "::endgroup::"
-            kill "$BACKEND_PID" 2>/dev/null || true
             exit 1
-          }
+          fi
 
       - name: Sembrar datos de referencia y fixtures de E2E
         run: psql -h localhost -U postgres -d sgds_db -f tests/e2e/fixtures/ci-seed.sql
@@ -143,17 +126,17 @@ jobs:
       - name: Instalar dependencias del frontend y arrancar Vite
         working-directory: SGDS.Frontend
         run: |
-          npm ci
+          npm ci --ignore-scripts
           nohup npm run dev -- --port 5173 > ../frontend.log 2>&1 &
-          npx --yes wait-on@8 -t 60000 http-get://localhost:5173
+          timeout 60 bash -c 'until curl -sf -o /dev/null http://localhost:5173; do sleep 1; done'
 
       - name: Instalar dependencias raíz y navegador de Playwright
         run: |
-          npm ci
-          npx playwright install --with-deps chromium
+          npm ci --ignore-scripts
+          ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Correr las pruebas E2E (Chromium)
-        run: npx playwright test tests/e2e --project=chromium
+        run: ./node_modules/.bin/playwright test tests/e2e --project=chromium
 
       - name: Logs del backend y frontend (si algo falló)
         if: ${{ failure() }}

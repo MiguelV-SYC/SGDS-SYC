@@ -12,6 +12,7 @@ import {
 import { getProyectosActivos, type ProyectoResponseDto } from '../services/proyectoService';
 import { getRoles, type RolDto } from '../services/rolService';
 import { useNavigate } from 'react-router-dom';
+import Paginador from '../components/shared/Paginador';
 
 interface FilaUsuario {
   key: string;
@@ -388,38 +389,7 @@ export default function GestionUsuariosPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-[14px] border-t border-line">
-            <span className="text-xs text-ink-600">Página {pagina} de {totalPaginas}</span>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                disabled={pagina === 1}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setPagina(n)}
-                  className={`w-7 h-7 rounded-lg border flex items-center justify-center text-xs ${
-                    n === pagina
-                      ? 'bg-[#0d9488] border-[#0d9488] text-white font-semibold'
-                      : 'border-line bg-white text-ink-600'
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                disabled={pagina === totalPaginas}
-                className="w-7 h-7 rounded-lg border border-line bg-white flex items-center justify-center text-xs text-ink-600 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <Paginador pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} acento="#0d9488" />
         </div>
       </main>
 

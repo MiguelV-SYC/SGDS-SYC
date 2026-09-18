@@ -127,6 +127,7 @@ export default function Sidebar({ active }: { active: string }) {
       {/* Fondo semitransparente — solo cuando el panel mobile está abierto, tocarlo lo cierra */}
       {abierto && (
         <div
+          role="presentation"
           className="md:hidden fixed inset-0 z-[1090] bg-black/40"
           onClick={() => setAbierto(false)}
         />

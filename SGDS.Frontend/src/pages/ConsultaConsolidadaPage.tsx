@@ -121,17 +121,18 @@ export default function ConsultaConsolidadaPage() {
                   ) : (
                     <div className="px-5 py-1">
                       {p.solicitudes.map((s) => (
-                        <div
+                        <button
+                          type="button"
                           key={s.solicitudId}
                           onClick={() => navigate(`/solicitudes/${s.solicitudId}`)}
-                          className="flex items-center justify-between gap-3 py-2.5 border-b border-paper last:border-b-0 text-[12.5px] cursor-pointer hover:text-[var(--color-accento)]"
+                          className="w-full text-left flex items-center justify-between gap-3 py-2.5 border-b border-paper last:border-b-0 text-[12.5px] cursor-pointer hover:text-[var(--color-accento)]"
                         >
                           <span className="text-ink-400 font-semibold text-[11.5px] shrink-0">#{s.numero}</span>
                           <span className="flex-1">{s.descripcion}</span>
                           <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-[10px] py-[4px] rounded-full shrink-0 ${ESTADO_STYLE[s.estado] ?? 'bg-paper text-ink-600'}`}>
                             {s.estado}
                           </span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
