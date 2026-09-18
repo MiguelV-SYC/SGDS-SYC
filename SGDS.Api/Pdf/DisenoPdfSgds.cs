@@ -3,8 +3,9 @@ using QuestPDF.Elements;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using SkiaSharp;
 using ZXing;
-using ZXing.Windows.Compatibility;
+using ZXing.SkiaSharp;
 
 namespace SGDS.Api.Pdf;
 
@@ -48,7 +49,6 @@ public static class DisenoPdfSgds
         return pngQr.GetGraphic(20);
     }
 
-    // Requiere System.Drawing (Windows) para el renderizado a Bitmap.
     public static byte[] GenerarBarcodePng(string contenido)
     {
         var escritor = new BarcodeWriter
@@ -57,9 +57,9 @@ public static class DisenoPdfSgds
             Options = new ZXing.Common.EncodingOptions { Width = 360, Height = 90, Margin = 5, PureBarcode = false },
         };
         using var bitmap = escritor.Write(contenido);
-        using var stream = new MemoryStream();
-        bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-        return stream.ToArray();
+        using var imagen = SKImage.FromBitmap(bitmap);
+        using var datosPng = imagen.Encode(SKEncodedImageFormat.Png, 100);
+        return datosPng.ToArray();
     }
 
     // ===== Encabezado institucional (degradado navy → azul + logo SGDS + escudo opcional) =====

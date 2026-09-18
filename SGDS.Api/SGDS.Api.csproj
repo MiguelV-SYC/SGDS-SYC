@@ -25,7 +25,10 @@
     <PackageReference Include="QuestPDF" Version="2026.7.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageReference Include="ZXing.Net" Version="0.16.11" />
-    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.14" />
+    <!-- SkiaSharp en vez de Windows.Compatibility (System.Drawing): el barcode se genera server-side
+         y el backend corre en Linux en CI/producción — System.Drawing.Bitmap lanza en tiempo de
+         ejecución fuera de Windows. QuestPDF ya trae SkiaSharp como dependencia transitiva. -->
+    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.14" />
   </ItemGroup>
 
   <ItemGroup>
